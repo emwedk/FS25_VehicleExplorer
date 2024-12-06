@@ -9,9 +9,7 @@ Besides that it has a couple of additional functionality. See below.
 The original mod source code can be found at: https://github.com/sperrgebiet/FS22_VehicleExplorer
 
 ### Not ported/fixed yet
-* Tardis, and integrating with it
-* Some GUI/menu rendering bugs
-* Tabbing doesn't cycle through all vehicles properly
+* Porting Tardis to FS25 and integrating with it?
 
 ### Features
 * List of all steerable vehicles (Specialization: Enterable)
