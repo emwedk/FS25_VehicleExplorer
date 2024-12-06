@@ -8,12 +8,12 @@ VehicleSort.eventName = {};
 -- It's great that Giants gets rid of functions as part of an update. Now we can do things more complicated than before
 --VehicleSort.ModName = g_currentModName
 --VehicleSort.ModDirectory = g_currentModDirectory
-VehicleSort.ModName = "FS22_VehicleExplorer"
-VehicleSort.ModDirectory = g_modManager.nameToMod.FS22_VehicleExplorer.modDir
-VehicleSort.Version = "0.2.0.5";
+VehicleSort.ModName = "FS25_VehicleExplorer"
+VehicleSort.ModDirectory = g_modManager.nameToMod.FS25_VehicleExplorer.modDir
+VehicleSort.Version = "1.0.0.0";
 
 
-VehicleSort.debug = fileExists(VehicleSort.ModDirectory ..'debug');
+VehicleSort.debug = true; -- fileExists(VehicleSort.ModDirectory ..'debug');
 
 VehicleSort.firstRun = true;
 
@@ -132,19 +132,20 @@ end
 
 function VehicleSort:loadMap(name)
 	print("--- loading VehicleSort V".. VehicleSort.Version .. " | ModName " .. VehicleSort.ModName .. " ---");
-	
-	FSBaseMission.registerActionEvents = Utils.appendedFunction(FSBaseMission.registerActionEvents, VehicleSort.RegisterActionEvents);
-	
+
+	PlayerInputComponent.registerActionEvents = Utils.appendedFunction(PlayerInputComponent.registerActionEvents, VehicleSort.RegisterActionEvents);
+	Enterable.onRegisterActionEvents = Utils.appendedFunction(Enterable.onRegisterActionEvents, VehicleSort.RegisterActionEvents);
+
 	VehicleSort:initVS();
 	VehicleSort:loadConfig();
-	
+
 	-- We'd get an error when we want to access the config menu and the data is not populated yet. Same as there is some functionality in corner cases where we
 	-- already need a populated Sorted list, hence we're going to pouplate it once here
 	for i = 1, #VehicleSort.config do
 		local val = {i, VehicleSort.config[i]};
 		table.insert(VehicleSort.orderedConfig, val);
 	end
-	table.sort(VehicleSort.orderedConfig, function(a, b) return a[2][3] < b[2][3] end)	
+	table.sort(VehicleSort.orderedConfig, function(a, b) return a[2][3] < b[2][3] end)
 end
 
 function VehicleSort:prepareVeEx()
@@ -174,20 +175,20 @@ function VehicleSort:onPostLoad(savegame)
 		if orderId ~= nil then
 			VehicleSort:dp(string.format('Loaded orderId {%d} for vehicleId {%d}', orderId, self.id), 'onPostLoad');
 		end
-		
+
 		if self.spec_vehicleSort ~= nil then
 			self.spec_vehicleSort.id = self.id;
 			if orderId ~= nil then
 				self.spec_vehicleSort.orderId = orderId;
 			end
 		end
-		
+
 		local isParked = Utils.getNoNil(savegame.xmlFile:getValue(savegame.key..".vehicleSort#isParked"), false)
 		if isParked then
 			VehicleSort:dp(string.format('Set isParked {%s} for orderId {%d} / vehicleId {%d}', tostring(isParked), orderId, self.id), 'onPostLoad');
 			self:setIsTabbable(false);
 		end
-		
+
 		-- For any reason trains get handled differently, and simply ignore what we set at this stage. So lets store the status to hande it later on.
 		if self.typeName == 'locomotive' then
 			if VehicleSort.loadTrainStatus[self.id] == nil then
@@ -214,6 +215,7 @@ function VehicleSort:onDelete()
 end
 
 function VehicleSort:RegisterActionEvents(isSelected, isOnActiveVehicle)
+	VehicleSort:dp("Registering action events...", 'RegisterActionEvents')
 
 	local actions = {
 					"vsToggleList",
@@ -231,20 +233,22 @@ function VehicleSort:RegisterActionEvents(isSelected, isOnActiveVehicle)
 					"vsEasyTab"
 				};
 
+	g_inputBinding:beginActionEventsModification(g_inputBinding.currentContextName)
 	for _, action in pairs(actions) do
 		local actionMethod = string.format("action_%s", action);
-		local result, eventName = InputBinding.registerActionEvent(g_inputBinding, action, self, VehicleSort[actionMethod], false, true, false, true)
+		local result, eventName = g_inputBinding.registerActionEvent(g_inputBinding, action, self, VehicleSort[actionMethod], false, true, false, true)
+		VehicleSort:dp("Register action event result", 'RegisterActionEvents', string.format("actionMethod: {%s} | event name: {%s}", actionMethod, eventName))
 		if result then
 			table.insert(VehicleSort.eventName, eventName);
-			g_inputBinding.events[eventName].displayIsVisible = VehicleSort.config[13][2];
+			g_inputBinding:setActionEventTextVisibility(eventId, VehicleSort.config[13][2]);
 		end
 	end
-	
+	g_inputBinding:endActionEventsModification()
 end
 
 function VehicleSort.registerEventListeners(vehicleType)
 	local functionNames = {	"onPreLoad", "onLoad", "onPostLoad", "saveToXMLFile", "onDelete" };
-	
+
 	for _, functionName in ipairs(functionNames) do
 		SpecializationUtil.registerEventListener(vehicleType, functionName, VehicleSort);
 	end
@@ -265,10 +269,10 @@ function VehicleSort:mouseEvent(posX, posY, isDown, isUp, button)
 	if VehicleSort:isActionAllowed() and ( isDown and Input.isMouseButtonPressed(Input.MOUSE_BUTTON_WHEEL_UP)) then
 		VehicleSort.action_vsMoveCursorUp();
 	end
-	
+
 	if VehicleSort:isActionAllowed() and ( isDown and Input.isMouseButtonPressed(Input.MOUSE_BUTTON_WHEEL_DOWN)) then
 		VehicleSort.action_vsMoveCursorDown();
-	end	
+	end
 end
 
 function VehicleSort:saveToXMLFile(xmlFile, key)
@@ -277,7 +281,7 @@ function VehicleSort:saveToXMLFile(xmlFile, key)
 		if self.spec_vehicleSort.orderId ~= nil then
 			xmlFile:setValue(key.."#UserOrder", self.spec_vehicleSort.orderId)
 		end
-		
+
 		if VehicleSort:isParked(self.spec_vehicleSort.realId) then
 			xmlFile:setValue(key.."#isParked", true)
 		end
@@ -289,18 +293,18 @@ function VehicleSort:update()
 	if VehicleSort.firstRun then
 		VehicleSort:prepareVeEx();
 	end
-	
+
 	--This should allow to have the default keybindings for Tab & Shift+Tab, while still using the ordered tabbing from VeEx, at least if it's activated
 	if VehicleSort.config[28][2] then
 		VehicleSort:overwriteDefaultTabBinding();
 	end
-	
+
 end
 
 function VehicleSort:draw()
-	
+
 	--VehicleSort:dp(string.format('showConfig [%s] & showVehicles [%s]', tostring(VehicleSort.showConfig), tostring(VehicleSort.showVehicles)));
-  
+
 	if VehicleSort.showConfig or VehicleSort.showVehicles then
 		local dbgY = VehicleSort.dbgY;
 		VehicleSort.bgY = nil;
@@ -312,7 +316,7 @@ function VehicleSort:draw()
 		  VehicleSort:drawList();
 		end
 	end
-	
+
 end
 
 function VehicleSort:delete()
@@ -335,7 +339,7 @@ function VehicleSort:action_vsToggleList(actionName, keyStatus, arg3, arg4, arg5
 			print("VehicleExplorer: Tardis integration available");
 		end
 	end
-		
+
 	if VehicleSort.showVehicles and not VehicleSort.showConfig then
 		VehicleSort.showVehicles = false;
 		VehicleSort.selectedLock = false;
@@ -366,7 +370,7 @@ function VehicleSort:action_vsLockListItem(actionName, keyStatus, arg3, arg4, ar
 			VehicleSort.config[VehicleSort.selectedRealConfigIndex][2] = VehicleSort.config[VehicleSort.selectedRealConfigIndex][2] + 1;
 			if VehicleSort.config[VehicleSort.selectedRealConfigIndex][2] > 9 then
 				VehicleSort.config[VehicleSort.selectedRealConfigIndex][2] = 1;
-			end			
+			end
 		elseif VehicleSort:contains({10, 17}, VehicleSort.selectedRealConfigIndex) then
 			VehicleSort.config[VehicleSort.selectedRealConfigIndex][2] = VehicleSort.config[VehicleSort.selectedRealConfigIndex][2] + 0.1;
 			if VehicleSort.config[VehicleSort.selectedRealConfigIndex][2] > 1 then
@@ -397,35 +401,35 @@ function VehicleSort:action_vsMoveCursorDown(actionName, keyStatus, arg3, arg4, 
 		VehicleSort:moveDown(1);
 	elseif VehicleSort.showConfig then
 		VehicleSort:moveConfigDown();
-	end	
+	end
 end
 
 function VehicleSort:action_vsMoveCursorUpFast(actionName, keyStatus, arg3, arg4, arg5)
 	VehicleSort:dp("action_vsMoveCursorUpFast fires", "action_vsMoveCursorUpFast");
-	if VehicleSort.showVehicles then 
+	if VehicleSort.showVehicles then
 		VehicleSort:moveUp(3);
-	end	
+	end
 end
 
 function VehicleSort:action_vsMoveCursorDownFast(actionName, keyStatus, arg3, arg4, arg5)
 	VehicleSort:dp("action_vsMoveCursorDownFast fires", "action_vsMoveCursorDownFast");
-	if VehicleSort.showVehicles then 
+	if VehicleSort.showVehicles then
 		VehicleSort:moveDown(3);
-	end	
+	end
 end
 
 function VehicleSort:action_vsChangeVehicle(actionName, keyStatus, arg3, arg4, arg5)
 	VehicleSort:dp("action_vsChangeVehicle fires", "action_vsChangeVehicle");
 	if VehicleSort.showVehicles then
-		local realVeh = g_currentMission.vehicles[VehicleSort.Sorted[VehicleSort.selectedIndex]];
-		if realVeh.getIsControlled and not realVeh:getIsControlled() then
+		local realVeh = g_currentMission.vehicleSystem.vehicles[VehicleSort.Sorted[VehicleSort.selectedIndex]];
+		if realVeh.getIsControlled and not realVeh:getIsControlled() and realVeh:getIsEnterable() then
 
 			VehicleSort:dp(string.format('VehicleSort.wasTeleportAction {%s}', tostring(VehicleSort.wasTeleportAction)));
-			
-			if envTardis == nil or 
-						(envTardis ~= nil and not VehicleSort.wasTeleportAction) or 
+
+			if envTardis == nil or
+						(envTardis ~= nil and not VehicleSort.wasTeleportAction) or
 						(envTardis ~= nil and VehicleSort.wasTeleportAction and VehicleSort.config[23][2]) then
-				g_currentMission:requestToEnterVehicle(realVeh);
+				g_localPlayer:requestToEnterVehicle(realVeh);
 				VehicleSort:easyTab(realVeh);
 				VehicleSort.wasTeleportAction = false;
 			elseif envTardis ~= nil then
@@ -440,24 +444,24 @@ function VehicleSort:action_vsShowConfig(actionName, keyStatus, arg3, arg4, arg5
 	if VehicleSort.showVehicles and not VehicleSort.showConfig then
       VehicleSort.showVehicles = false;
 	end
-    
+
 	VehicleSort.showConfig = not VehicleSort.showConfig;
 	VehicleSort:saveConfig();
-	
+
 	--Directly set the displayIsVisible for the F1 help menu
 	if VehicleSort.config[13][2] then
 		VehicleSort:setHelpVisibility(VehicleSort.eventName, true)
 		--If Tardis integration is available we'll also do the same for it
 		if envTardis ~= nil and #Tardis.eventName > 0 then
 			VehicleSort:setHelpVisibility(Tardis.eventName, true)
-		end	
+		end
 	else
 		VehicleSort:setHelpVisibility(VehicleSort.eventName, false)
 		if envTardis ~= nil and #Tardis.eventName > 0 then
 			VehicleSort:setHelpVisibility(Tardis.eventName, false)
 		end
 	end
-	
+
 	InputBinding:notifyEventChanges();
 end
 
@@ -471,29 +475,29 @@ end
 function VehicleSort:action_vsRepair(actionName, keyStatus, arg3, arg4, arg5)
 	VehicleSort:dp(string.format('action_vsRepair fires - VehicleSort.showVehicles {%s}', tostring(VehicleSort.showVehicles)), "action_vsRepair");
 	if VehicleSort.showVehicles then
-	
+
 		local infoText = {};
 		local blinkTime = 2000;
 		VehicleStatus:RepairVehicleWithImplements(VehicleSort.Sorted[VehicleSort.selectedIndex]);
 		table.insert(infoText, g_i18n.modEnvironments[VehicleSort.ModName].texts.RepairDone);
-		
+
 		if VehicleSort.config[21][2] then
 			VehicleStatus:CleanVehicleWithImplements(VehicleSort.Sorted[VehicleSort.selectedIndex]);
 			--We want the blinking text to be centered
-			
+
 			table.insert(infoText, g_i18n.modEnvironments[VehicleSort.ModName].texts.CleaningDone);
 			blinkTime = 3000;
 		end
-		
+
 		--If 'repaint' is enabled the config we also have to take care of this
 		if VehicleSort.config[29][2] then
 			VehicleStatus:RepaintVehicleWithImplements(VehicleSort.Sorted[VehicleSort.selectedIndex]);
 			table.insert(infoText, g_i18n.modEnvironments[VehicleSort.ModName].texts.RepaintDone);
 			blinkTime = 4000;
 		end
-		
+
 		VehicleSort:showCenteredBlinkingWarning(infoText, blinkTime);
-		
+
 	end
 end
 
@@ -539,7 +543,7 @@ function VehicleSort:drawConfig()
 	renderText(VehicleSort.tPos.x, headingY, size + VehicleSort.tPos.sizeIncr, tostring(txt)); -- x, y, size, txt
 
 	setTextAlignment(VehicleSort.tPos.alignmentL);
-	
+
 	--VehicleSort:dp(orderedConfig, 'drawConfig');
 	-- And now the rest of our config
 	for k, v in ipairs(VehicleSort.orderedConfig) do
@@ -570,12 +574,12 @@ function VehicleSort:drawConfig()
 		table.insert(texts, {xPos - (VehicleSort.bgW / 2) + (VehicleSort.tPos.columnWidth * 2), yPos, size, clr, state}); --config value
 		yPos = yPos - size - VehicleSort.tPos.spacing;
 	end
-  
+
 	VehicleSort.bgY = yPos;
 	VehicleSort.bgH = (y - yPos) + size + VehicleSort.tPos.yOffset + VehicleSort.tPos.padHeight;
 	if VehicleSort.bgY ~= nil and VehicleSort.bgW ~=nil and VehicleSort.bgH ~= nil then
 		VehicleSort:renderBg(VehicleSort.bgX, VehicleSort.bgY, VehicleSort.bgW, VehicleSort.bgH);
-	end;  
+	end;
 
 	setTextBold(false);
 	for k, v in ipairs(texts) do
@@ -583,36 +587,36 @@ function VehicleSort:drawConfig()
 		renderText(v[1], v[2], v[3], tostring(v[5]));
 	end
 	setTextColor(unpack(VehicleSort.tColor.standard));
-  
+
 	--Show the last selected vehicle for info/image position & BG option
 	if VehicleSort:contains({17, 18, 19, 24, 25}, VehicleSort.selectedRealConfigIndex) then
-		if g_currentMission.vehicles[VehicleSort.Sorted[VehicleSort.selectedIndex]] ~= nil then
+		if g_currentMission.vehicleSystem.vehicles[VehicleSort.Sorted[VehicleSort.selectedIndex]] ~= nil then
 			VehicleSort:drawInfobox(VehicleSort.Sorted[VehicleSort.selectedIndex]);
 			VehicleSort:drawStoreImage(VehicleSort.Sorted[VehicleSort.selectedIndex]);
 		end
 	end
-  
+
 end
 
 function VehicleSort:drawList()
   VehicleSort.Sorted = VehicleSort:getOrderedVehicles();
-   
+
    if VehicleSort.HiddenCount == #VehicleSort.Sorted then
 		VehicleSort:showNoVehicles();
 		VehicleSort.showVehicles = false;
 		return false;
    end
-   
-  --VehicleSort:dp(vehList, 'drawList', 'vehList');
-  
+
+  VehicleSort:dp(vehList, 'drawList', 'vehList');
+
 	local cnt = #VehicleSort.Sorted;
 	if cnt == 0 then
 		return;
 	end
 	setTextBold(true); -- for width checks, to compensate for increased width when the line is bold
- 
+
 	local yPos = VehicleSort.tPos.y;
-	local bgPosY = yPos; 
+	local bgPosY = yPos;
 	local size = VehicleSort.getTextSize();
 	local y = VehicleSort.tPos.y;
 	local txt = g_i18n.modEnvironments[VehicleSort.ModName].texts.vs_title;
@@ -621,10 +625,10 @@ function VehicleSort:drawList()
 	local minBgW = 0;
 	VehicleSort.bgY = y - VehicleSort.tPos.spacing;
 	VehicleSort.bgW = getTextWidth(size, txt) + VehicleSort.tPos.padSides;		--Background width will be dynamically adjusted later on. Just a value to get started with
-  
+
 	-- We render the heading seperately to have it centered, despite the user config for the list
 	local headingY = VehicleSort.tPos.y + size + (VehicleSort.tPos.padHeight * 6);
-  
+
 	setTextAlignment(VehicleSort.tPos.alignmentC);
 	setTextColor(unpack(VehicleSort.tColor.standard));
 	renderText(VehicleSort.tPos.x, headingY, size + VehicleSort.tPos.sizeIncr, tostring(txt)); -- x, y, size, txt
@@ -637,15 +641,15 @@ function VehicleSort:drawList()
 	else
 		setTextAlignment(VehicleSort.tPos.alignmentC);
 	end
- 
+
 	--Just used to figure out if we'll have multiple columns, hence we've to loop through the amount of vehicles to get the total height of the table
 	--This assumes that there is just one line/vehicle. But it's a rough guess though
 	local chk = yPos + size + VehicleSort.tPos.spacing;
 	local chkColNum = 1;
-	
+
 	--Min distance to the bottom of the screen
 	local minY = ((4 * (size + VehicleSort.tPos.spacing)) + VehicleSort.tPos.padHeight);
-	
+
 	for i = 1, cnt do --loop through lines to see if there will be multiple columns needed
 		if not VehicleSort:isHidden(VehicleSort.Sorted[i]) then
 			chk = chk - size - VehicleSort.tPos.spacing;
@@ -657,9 +661,9 @@ function VehicleSort:drawList()
 	end
 
 	local colNum = 1;			--For multiple columns this counter gets increased
-	--VehicleSort:dp(string.format('chk {%f} | check for chk {%f} | minY {%f}', chk, size + VehicleSort.tPos.spacing + VehicleSort.tPos.padHeight, minY));
-	--VehicleSort:dp(string.format('minY {%s} - chk {%s} - chkColNum {%s}', minY, chk, chkColNum));
-	
+	VehicleSort:dp(string.format('chk {%f} | check for chk {%f} | minY {%f}', chk, size + VehicleSort.tPos.spacing + VehicleSort.tPos.padHeight, minY));
+	VehicleSort:dp(string.format('minY {%s} - chk {%s} - chkColNum {%s}', minY, chk, chkColNum));
+
 	-- Calc our maxTxtW based on the expected number of columns.
 	--As we support just three columns we do the calc based on 3. In case we don't show a infobox we can add the space of one additional column
 	local maxTxtW = 0;
@@ -668,9 +672,9 @@ function VehicleSort:drawList()
 	else
 		maxTxtW = (VehicleSort.tPos.columnWidth - VehicleSort.tPos.padSides) * (3 / chkColNum) + VehicleSort.tPos.columnWidth;
 	end
-	
-	--VehicleSort:dp(string.format('columnWidth {%s} - maxTxtW {%s} - chkColNum {%s}', VehicleSort.tPos.columnWidth, maxTxtW, chkColNum));
-	
+
+	VehicleSort:dp(string.format('columnWidth {%s} - maxTxtW {%s} - chkColNum {%s}', VehicleSort.tPos.columnWidth, maxTxtW, chkColNum));
+
 	for i = 1, cnt do
 		local realId = VehicleSort.Sorted[i];
 		if not VehicleSort:isHidden(realId) then
@@ -694,17 +698,17 @@ function VehicleSort:drawList()
 				-- Otherwise we add the lines twice
 				txt = '';
 			end
-			
+
 			bold = VehicleSort:isControlled(realId) and (not g_currentMission.missionDynamicInfo.isMultiplayer or VehicleSort:getControllerName(realId) == g_gameSettings.nickname);
-			
+
 			if string.len(txt) > 0 then
 				table.insert(texts, {colNum, yPos, size, bold, clr, txt});
 				yPos = yPos - size - VehicleSort.tPos.spacing;
-				
+
 				-- To find our proper background width and the position of the columns we've to keep track of the longest text
 				VehicleSort.bgW = math.max(VehicleSort.bgW, getTextWidth(size, txt) + VehicleSort.tPos.padSides);
 			end
-			
+
 			-- And for multiline entries we've to add multiple entries to our texts table
 			if #multiLine > 0 then
 				for k, v in ipairs(multiLine) do
@@ -715,12 +719,12 @@ function VehicleSort:drawList()
 					end
 				end
 			end
-		
-			
+
+
 			-- We don't want our background go further than necessary
 			bgPosY = math.min(bgPosY, yPos);
 		end
-		
+
 		if yPos < minY then -- getting near bottom of screen, start a new column
 			yPos = VehicleSort.tPos.y;
 			colNum = colNum + 1;
@@ -741,14 +745,14 @@ function VehicleSort:drawList()
 
 	--We've to calculate our X based on each column.
 	local tblColWidth = VehicleSort.bgW / colNum;
-	
+
 	local tPosXAligned = VehicleSort.tPos.x;
 	if VehicleSort.config[20][2] == 1 then
 		tPosXAligned = VehicleSort.tPos.x - (tblColWidth / 2) + VehicleSort.tPos.padSides;
 	elseif VehicleSort.config[20][2] == 3 then
 		tPosXAligned = VehicleSort.tPos.x + (tblColWidth / 2) - VehicleSort.tPos.padSides;
 	end
-	
+
 	local colX = {};
 	colX[0] = tPosXAligned;
 	if colNum == 2 then
@@ -761,23 +765,23 @@ function VehicleSort:drawList()
 	else
 		--We just support 3 columsn. So this case is primarily for one column and as a 'catch all' which won't work but I don't care for now
 		colX[1] = tPosXAligned;
-	end	
-	
-	--VehicleSort:dp(colX, 'drawList');
-	
+	end
+
+	VehicleSort:dp(colX, 'drawList');
+
 	for k, v in ipairs(texts) do
 		if type(v[4]) == 'boolean' then
 			setTextBold(v[4]);
 		end
 		setTextColor(unpack(v[5]));
 		local storColNum = v[1];
-		--VehicleSort:dp(storColNum, 'drawList', 'storcolNum');
+		VehicleSort:dp(storColNum, 'drawList', 'storcolNum');
 		renderText(colX[storColNum], v[2], v[3], tostring(v[6])); -- x, y, size, txt
 	end
 
 	setTextBold(false);
 	setTextColor(unpack(VehicleSort.tColor.standard));
-  
+
 	if VehicleSort.config[15][2] then
 		VehicleSort:drawStoreImage(VehicleSort.Sorted[VehicleSort.selectedIndex]);
 	end
@@ -785,19 +789,19 @@ function VehicleSort:drawList()
 	if VehicleSort.config[16][2] then
 		VehicleSort:drawInfobox(VehicleSort.Sorted[VehicleSort.selectedIndex])
 	end
-  
+
 end
 
 function VehicleSort:getVehicles()
-	local allveh = g_currentMission.vehicles
+	local allveh = g_currentMission.vehicleSystem.vehicles
 	local veh = {}
-	
+
 	for k, v in ipairs(allveh) do
 		if not v.isDeleted then
 			if v.spec_vehicleSort ~= nil then
 				v.spec_vehicleSort.realId = k;
 				table.insert(veh, v);
-				
+
 				-- Handle trains at this stage for first load, as we loop through all vehicles anyways
 				if VehicleSort:isTrain(k) and VehicleSort.loadTrainStatus.entries > 0 then
 					VehicleSort:handlePostloadTrains(k);
@@ -809,8 +813,8 @@ function VehicleSort:getVehicles()
 end
 
 function VehicleSort:getVehImplements(realId)
-	if g_currentMission.vehicles[realId].getAttachedImplements ~= nil then
-		if #g_currentMission.vehicles[realId]:getAttachedImplements() > 0 then
+	if g_currentMission.vehicleSystem.vehicles[realId].getAttachedImplements ~= nil then
+		if #g_currentMission.vehicleSystem.vehicles[realId]:getAttachedImplements() > 0 then
 			local allImp = {}
 			-- Credits to Tardis from FS17
 			local function addAllAttached(obj)
@@ -821,8 +825,8 @@ function VehicleSort:getVehImplements(realId)
 					end
 				end
 			end
-                
-            addAllAttached(g_currentMission.vehicles[realId]);
+
+            addAllAttached(g_currentMission.vehicleSystem.vehicles[realId]);
 			return allImp;
 		else
 			return nil;
@@ -868,7 +872,7 @@ function VehicleSort:getFillLevel(obj)
 	local fillLevel = 0;
 	local cap = 0;
 	local fillType = "";
-	
+
 	if obj.getFillUnits ~= nil then
 		for _, fillUnit in ipairs(obj:getFillUnits()) do
 			-- We don't want to take care of Diesel, Def or Air right now
@@ -877,14 +881,14 @@ function VehicleSort:getFillLevel(obj)
 				cap = fillUnit.capacity
 				fillType = g_fillTypeManager.fillTypes[fillUnit.fillType]['title']
 			end
-			
+
 			--DummyMod:dp(string.format('FillLevel - fillUnitID {%f} - fillLevel {%f} - capacity {%f} - fillType {%s}', fillUnit.fillUnitIndex, fillLevel, cap, fillType), 'getFillLevel');
 		end
 	end
 
 	--VehicleSort:dp(string.format('FillLevel fillLevel {%f} - capacity {%f}', fillLevel, cap), 'getFillLevel');
-	--VehicleSort:dp(string.format('fillType {%s} - fillTypeIndex {%s} - filltypeTitle {%s}', fillLevelVehicle.fillType, fillTypeIndex, fillType));	
-	
+	--VehicleSort:dp(string.format('fillType {%s} - fillTypeIndex {%s} - filltypeTitle {%s}', fillLevelVehicle.fillType, fillTypeIndex, fillType));
+
 	return fillLevel, cap, fillType
 end
 
@@ -892,9 +896,9 @@ function VehicleSort:getFillDisplay(obj, infoBox)
 	local ret = '';
 	if VehicleSort.config[6][2] or infoBox then -- Fill-Level-Display active?
 		local f, c, t = VehicleSort:getFillLevel(obj);
-		
+
 		if not infoBox then t = ""; end;	-- we use the same method for the list and the infobox. But the fillType should just be visible in the infobox
-		
+
 		if VehicleSort.config[8][2] or f > 0 then -- Empty should be shown or is not empty
 			if c > 0 then -- Capacity more than zero
 				if infoBox then  -- show more details in the infobox
@@ -907,7 +911,7 @@ function VehicleSort:getFillDisplay(obj, infoBox)
 			end
 		end
 	end
-	
+
 	return ret;
 end
 
@@ -915,17 +919,17 @@ function VehicleSort:getFullVehicleName(realId)
 	local nam = '';
 	local ret = {};
 	local tmpString = '(%s) ';
-  
+
 	if VehicleSort:isParked(realId) then
 		nam = '[P] '; -- Prefix for parked (not part of tab list) vehicles
 	end
-	if g_currentMission.vehicles[realId] ~= nil and VehicleSort:getIsCourseplay(g_currentMission.vehicles[realId]) then -- CoursePlay
+	if g_currentMission.vehicleSystem.vehicles[realId] ~= nil and VehicleSort:getIsCourseplay(g_currentMission.vehicleSystem.vehicles[realId]) then -- CoursePlay
 		nam = nam .. string.format(tmpString, g_i18n.modEnvironments[VehicleSort.ModName].texts.courseplay);
-	elseif (g_currentMission.vehicles[realId].getIsFollowMeActive and g_currentMission.vehicles[realId]:getIsFollowMeActive()) then	--FollowMe
+	elseif (g_currentMission.vehicleSystem.vehicles[realId].getIsFollowMeActive and g_currentMission.vehicleSystem.vehicles[realId]:getIsFollowMeActive()) then	--FollowMe
 		nam = nam .. string.format(tmpString, g_i18n.modEnvironments[VehicleSort.ModName].texts.followme);
-	elseif (g_currentMission.vehicles[realId].ad ~= nil and g_currentMission.vehicles[realId].ad.stateModule ~= nil and g_currentMission.vehicles[realId].ad.stateModule.active) then	--AutoDrive
+	elseif (g_currentMission.vehicleSystem.vehicles[realId].ad ~= nil and g_currentMission.vehicleSystem.vehicles[realId].ad.stateModule ~= nil and g_currentMission.vehicleSystem.vehicles[realId].ad.stateModule.active) then	--AutoDrive
 		nam = nam .. string.format(tmpString, g_i18n.modEnvironments[VehicleSort.ModName].texts.autodrive);
-	elseif g_currentMission.vehicles[realId].aiveIsStarted then
+	elseif g_currentMission.vehicleSystem.vehicles[realId].aiveIsStarted then
 		nam = nam .. string.format(tmpString, g_i18n.modEnvironments[VehicleSort.ModName].texts.aive);
 	elseif VehicleSort:isHired(realId) then
 		nam = nam .. string.format(tmpString, g_i18n.modEnvironments[VehicleSort.ModName].texts.hired);
@@ -946,7 +950,7 @@ function VehicleSort:getFullVehicleName(realId)
 	  --VehicleSort:dp(veh.spec_vehicleSort, 'getFullVehicleName', 'Table spec_vehicleSort');
 	  nam = nam .. string.format('%s', VehicleSort:getName(realId));
 	end
-	
+
 	-- Show horse power
 	if VehicleSort.config[4][2] then
 		local horsePower = VehicleSort:getHorsePower(realId);
@@ -955,16 +959,16 @@ function VehicleSort:getFullVehicleName(realId)
 		end
 	end
 
-	table.insert(ret, nam .. VehicleSort:getFillDisplay(g_currentMission.vehicles[realId]));
+	table.insert(ret, nam .. VehicleSort:getFillDisplay(g_currentMission.vehicleSystem.vehicles[realId]));
 
 	if VehicleSort:getVehImplements(realId) ~= nil and VehicleSort.config[12][2] then
 		local implements = VehicleSort:getVehImplements(realId);
-		
+
 		local maxCount = VehicleSort.config[26][2];
 		if #implements < maxCount then
 			maxCount = #implements;
 		end
-		
+
 		local linkWord = string.format(' %s', g_i18n.modEnvironments[VehicleSort.ModName].texts.with);
 		for i=1, maxCount do
 			local imp = implements[i];
@@ -972,7 +976,7 @@ function VehicleSort:getFullVehicleName(realId)
 				if i > 1 then
 					linkWord = "&";
 				end
-				table.insert(ret, string.format('%s %s%s ', linkWord, VehicleSort:getAttachmentName(imp.object), VehicleSort:getFillDisplay(imp.object)));		
+				table.insert(ret, string.format('%s %s%s ', linkWord, VehicleSort:getAttachmentName(imp.object), VehicleSort:getFillDisplay(imp.object)));
 			end
 		end
 	end
@@ -981,10 +985,10 @@ function VehicleSort:getFullVehicleName(realId)
 end
 
 function VehicleSort:getName(realId, sFallback)
-	nam = g_currentMission.vehicles[realId]:getName();
+	nam = g_currentMission.vehicleSystem.vehicles[realId]:getName();
 	if nam == nil then
 		nam = obj.typeName;
-	end	
+	end
 	if nam == nil or nam == '' then
 		return sFallback;
 	else
@@ -993,8 +997,8 @@ function VehicleSort:getName(realId, sFallback)
 end
 
 function VehicleSort:getBrandName(realId)
-	--return g_currentMission.vehicles[realId]:getFullName();		--Problem is that getFullName also returns the helper name.
-	local storeItem = g_storeManager:getItemByXMLFilename(g_currentMission.vehicles[realId].configFileName);
+	--return g_currentMission.vehicleSystem.vehicles[realId]:getFullName();		--Problem is that getFullName also returns the helper name.
+	local storeItem = g_storeManager:getItemByXMLFilename(g_currentMission.vehicleSystem.vehicles[realId].configFileName);
     if storeItem ~= nil then
 		local brand = g_brandManager:getBrandByIndex(storeItem.brandIndex);
 		if brand ~= nil then
@@ -1011,7 +1015,7 @@ function VehicleSort:getOrderedVehicles()
 	local orderedToOrder = {};
 	VehicleSort.HiddenCount = 0;
 	local vehList = VehicleSort:getVehicles();
-  
+
 	-- We don't want to do everything all the time, unless we know that something has changed, like after a vehicle got deleted
 	-- TEST: Always return a Sorted list. Lets see if that helps us avoid the mixup with implements
 	--[[
@@ -1021,41 +1025,41 @@ function VehicleSort:getOrderedVehicles()
 	end
 	]]
 	--VehicleSort:dp("Sorted list seems outdated. So doing the ordering again.", "getOrderedVehicles");
-  
+
 	for _, veh in pairs(vehList) do
 		if veh.spec_vehicleSort.orderId ~= nil then
 			table.insert(orderedToOrder, {orderId=veh.spec_vehicleSort.orderId, realId=veh.spec_vehicleSort.realId} );
 		else
 			table.insert(unordered, veh.spec_vehicleSort.realId);
 		end
-		
+
 		-- Keep track of hidden items, so that we're not showing an empty list
 		if VehicleSort:isHidden(veh.spec_vehicleSort.realId) then
 			VehicleSort.HiddenCount = VehicleSort.HiddenCount + 1;
 		end
 	end
-	
+
 	-- Now order our temp table based on the actual orderId
 	table.sort(orderedToOrder, function(a,b) return a['orderId'] < b['orderId'] end)
 	-- And to avoid any holes in the order or dups we'll just add them to a new ordered table
 	for _, v in ipairs(orderedToOrder) do
 		table.insert(ordered, v['realId']);
 	end
-	
+
 	local cntOrdered = #ordered;
-	
+
 	if unordered ~= nil then
 		for _, v in pairs(unordered) do
 			table.insert(ordered, v);
 		end
 	end
-	
+
 	-- We might have to reorder the list in case we've missing entries or completely new vehicles
 	if #vehList ~= cntOrdered or #unordered ~= 0 then
 		VehicleSort:dp(string.format('Reshuffle of vehicles required. #vehList {%d} - cntOrdered {%d} - #unordered {%d}', #vehList, cntOrdered, #unordered));
 		ordered = VehicleSort:reshuffleVehicles(ordered);
 	end
-	
+
 	--VehicleSort:SyncSorted();
 	return ordered;
 
@@ -1068,10 +1072,10 @@ function VehicleSort:reshuffleVehicles(list)
 		VehicleSort:dp(string.format('Reshuffle vehile: orderId {%d}, realId {%d}', i, v), 'reshuffleVehicles');
 		-- Actually that shouldn't be necessary. But just had an corner case where an Hauer Weight suddenly showed up in the VehicleList
 		-- So just to be sure and avoid any callstacks lets check if our spec is available
-		if g_currentMission.vehicles[v]['spec_vehicleSort'] ~= nil then
+		if g_currentMission.vehicleSystem.vehicles[v]['spec_vehicleSort'] ~= nil then
 			table.insert(newList, v);
-			g_currentMission.vehicles[v]['spec_vehicleSort']['orderId'] = i;
-			g_currentMission.vehicles[v]['spec_vehicleSort']['realId'] = v;
+			g_currentMission.vehicleSystem.vehicles[v]['spec_vehicleSort']['orderId'] = i;
+			g_currentMission.vehicleSystem.vehicles[v]['spec_vehicleSort']['realId'] = v;
 			i = i + 1;
 		end
 	end
@@ -1095,17 +1099,17 @@ function VehicleSort:getTextColor(index, realId)
 		return VehicleSort.tColor.self;
 	-- Not sure yet if it make sense to have multiple different colors for CP, AD, FM. I imagine it's getting to busy then. But lets give it a try
 	-- Has to be before 'isHired', otherwise will end up with the same hired color
-	elseif g_currentMission.vehicles[realId] ~= nil and self:getIsCourseplay(g_currentMission.vehicles[realId]) then
+	elseif g_currentMission.vehicleSystem.vehicles[realId] ~= nil and self:getIsCourseplay(g_currentMission.vehicleSystem.vehicles[realId]) then
 		return VehicleSort.tColor.courseplay;
-	elseif (g_currentMission.vehicles[realId].getIsFollowMeActive and g_currentMission.vehicles[realId]:getIsFollowMeActive()) then
+	elseif (g_currentMission.vehicleSystem.vehicles[realId].getIsFollowMeActive and g_currentMission.vehicleSystem.vehicles[realId]:getIsFollowMeActive()) then
 		return VehicleSort.tColor.followme;
-	elseif (g_currentMission.vehicles[realId].ad ~= nil and g_currentMission.vehicles[realId].ad.stateModule ~= nil and g_currentMission.vehicles[realId].ad.stateModule.active) then
+	elseif (g_currentMission.vehicleSystem.vehicles[realId].ad ~= nil and g_currentMission.vehicleSystem.vehicles[realId].ad.stateModule ~= nil and g_currentMission.vehicleSystem.vehicles[realId].ad.stateModule.active) then
 		return VehicleSort.tColor.autodrive;
-	elseif g_currentMission.vehicles[realId].aiveIsStarted then
+	elseif g_currentMission.vehicleSystem.vehicles[realId].aiveIsStarted then
 		return VehicleSort.tColor.aive;
 	elseif VehicleSort:isHired(realId) then
 		return VehicleSort.tColor.hired;
-	elseif VehicleStatus:getIsMotorStarted(g_currentMission.vehicles[realId]) then
+	elseif VehicleStatus:getIsMotorStarted(g_currentMission.vehicleSystem.vehicles[realId]) then
 		return VehicleSort.tColor.motorOn;
 	else
 		if VehicleSort.config[27][2] then						--Alterate the list colors if enabled
@@ -1136,12 +1140,12 @@ function VehicleSort:getTextSize()
 end
 
 function VehicleSort:getHorsePower(realId)
-	if g_currentMission.vehicles[realId] ~= nil then
+	if g_currentMission.vehicleSystem.vehicles[realId] ~= nil then
 		if VehicleSort:isTrain(realId) then
 			--VehicleSort:dp(string.format('isTrain -> realId {%s}', tostring(realId)), 'getHorsePower');
 			return VehicleSort:getHorsePowerFromStore(realId)
 		else
-			local veh = g_currentMission.vehicles[realId]
+			local veh = g_currentMission.vehicleSystem.vehicles[realId]
 			if veh.spec_motorized ~= nil then
 				local maxMotorTorque = veh.spec_motorized.motor.peakMotorTorque
 				local maxRpm = veh.spec_motorized.motor.maxRpm
@@ -1169,8 +1173,8 @@ end
 
 function VehicleSort:getHorsePowerFromStore(realId)
 	--VehicleSort:dp(string.format('realId {%s}', tostring(realId)));
-	local motorConfig = g_currentMission.vehicles[realId]['configurations']['motor']
-	local confFile = string.lower(g_currentMission.vehicles[realId]['configFileName']);
+	local motorConfig = g_currentMission.vehicleSystem.vehicles[realId]['configurations']['motor']
+	local confFile = string.lower(g_currentMission.vehicleSystem.vehicles[realId]['configFileName']);
 	storeItem = g_storeManager.xmlFilenameToItem[confFile:lower()];
 	--VehicleSort:dp(storeItem);
 	if storeItem ~= nil then
@@ -1187,8 +1191,8 @@ end
 
 function VehicleSort:getControllerName(realId)
 	if not VehicleSort:isHired(realId) then
-		if g_currentMission.vehicles[realId].getControllerName ~= nil then
-			return g_currentMission.vehicles[realId]:getControllerName();
+		if g_currentMission.vehicleSystem.vehicles[realId].getControllerName ~= nil then
+			return g_currentMission.vehicleSystem.vehicles[realId]:getControllerName();
 		else
 			return "Unknown Controller";
 		end
@@ -1216,13 +1220,13 @@ function VehicleSort:initVS()
 	VehicleSort.tPos = {};
 	VehicleSort.tPos.x = 0.5;
 	VehicleSort.tPos.center = 0.5;
-	VehicleSort.tPos.y = g_currentMission.inGameMenu.hud.topNotification.origY + g_currentMission.inGameMenu.hud.topNotification.infoOffsetY;  -- y Position of Textfield, originally hardcoded 0.9
-	VehicleSort.tPos.yOffset = g_currentMission.inGameMenu.hud.topNotification.infoOffsetY;  --* 1.5; -- y Position offset for headings, originally hardcoded 0.007
-	VehicleSort.tPos.size = g_currentMission.inGameMenu.hud.gameInfoDisplay.timeTextSize;  -- TextSize, originally hardcoded 0.018
+	VehicleSort.tPos.y = g_currentMission.hud.topNotification.y + g_currentMission.hud.topNotification.infoTextOffsetY;  -- y Position of Textfield, originally hardcoded 0.9
+	VehicleSort.tPos.yOffset = g_currentMission.hud.topNotification.infoTextOffsetY;  --* 1.5; -- y Position offset for headings, originally hardcoded 0.007
+	VehicleSort.tPos.size = g_currentMission.hud.gameInfoDisplay.clockTextSize;  -- TextSize, originally hardcoded 0.018
 	VehicleSort.tPos.sizeBig = VehicleSort.tPos.size * 1.2;
 	VehicleSort.tPos.sizeSmall = VehicleSort.tPos.size * 0.6;
-	VehicleSort.tPos.sizeIncr = g_currentMission.inGameMenu.hud.speedMeter.cruiseControlTextOffsetY; -- Text size increase for headings
-	VehicleSort.tPos.spacing = g_currentMission.inGameMenu.hud.speedMeter.cruiseControlTextOffsetY;  -- Spacing between lines, originally hardcoded 0.005
+	VehicleSort.tPos.sizeIncr = g_currentMission.hud.speedMeter.cruiseControlTextOffsetY; -- Text size increase for headings
+	VehicleSort.tPos.spacing = g_currentMission.hud.speedMeter.cruiseControlTextOffsetY;  -- Spacing between lines, originally hardcoded 0.005
 	VehicleSort.tPos.padHeight = VehicleSort.tPos.spacing;
 	VehicleSort.tPos.padSides = VehicleSort.tPos.padHeight;
 	--VehicleSort.tPos.columnWidth = (((1 - VehicleSort.tPos.x) / 2) );
@@ -1240,14 +1244,14 @@ function VehicleSort:initVS()
 	else
 		VehicleSort.savePath = VehicleSort.saveBasePath .. 'savegame' .. g_careerScreen.savegameList.selectedIndex .. '/';
 	end
-	
+
 	createFolder(VehicleSort.userPath .. 'modSettings/');
 	createFolder(VehicleSort.saveBasePath);
 	createFolder(VehicleSort.savePath);
 	VehicleSort.xmlFilename = VehicleSort.savePath .. 'VeExConfig.xml';
-	VehicleSort.bg = createImageOverlay('dataS/menu/blank.png'); --credit: Decker_MMIV, VehicleGroupsSwitcher mod
+	VehicleSort.bg = createImageOverlay('dataS/menu/black.png'); --credit: Decker_MMIV, VehicleGroupsSwitcher mod
 	VehicleSort.bgX = 0.5;
-  
+
 	VehicleSort:dp(string.format('Initialized userPath [%s] saveBasePath [%s] savePath [%s]',
 	tostring(VehicleSort.userPath),
 	tostring(VehicleSort.saveBasePath),
@@ -1255,8 +1259,8 @@ function VehicleSort:initVS()
 end
 
 function VehicleSort:isCrane(realId)
-	if g_currentMission.vehicles[realId] ~= nil then
-		return g_currentMission.vehicles[realId]['typeName'] == 'crane';
+	if g_currentMission.vehicleSystem.vehicles[realId] ~= nil then
+		return g_currentMission.vehicleSystem.vehicles[realId]['typeName'] == 'crane';
 	end
 end
 
@@ -1266,32 +1270,32 @@ end
 
 function VehicleSort:isTrain(realId)
 	--VehicleSort:dp(string.format('realId {%d}', realId), 'isTrain');
-	if g_currentMission.vehicles[realId] ~= nil then
-		return g_currentMission.vehicles[realId]['typeName'] == 'locomotive';
+	if g_currentMission.vehicleSystem.vehicles[realId] ~= nil then
+		return g_currentMission.vehicleSystem.vehicles[realId]['typeName'] == 'locomotive';
 	end
 end
 
 function VehicleSort:isSteerableImplement(realId)
-	if g_currentMission.vehicles[realId] ~= nil then
-		return g_currentMission.vehicles[realId]['spec_attachable'] ~= nil;
+	if g_currentMission.vehicleSystem.vehicles[realId] ~= nil then
+		return g_currentMission.vehicleSystem.vehicles[realId]['spec_attachable'] ~= nil;
 	end
 end
 
 function VehicleSort:isControlled(realId)
-	if not VehicleSort:isHired(realId) and g_currentMission.vehicles[realId].getIsControlled ~= nil then
-		return g_currentMission.vehicles[realId]:getIsControlled(); 
+	if not VehicleSort:isHired(realId) and g_currentMission.vehicleSystem.vehicles[realId].getIsControlled ~= nil then
+		return g_currentMission.vehicleSystem.vehicles[realId]:getIsControlled();
 	end
 end
 
 function VehicleSort:isParked(realId)
-	if g_currentMission.vehicles[realId] ~= nil and g_currentMission.vehicles[realId].getIsTabbable ~= nil then
-		return not g_currentMission.vehicles[realId]:getIsTabbable();
+	if g_currentMission.vehicleSystem.vehicles[realId] ~= nil and g_currentMission.vehicleSystem.vehicles[realId].getIsTabbable ~= nil then
+		return not g_currentMission.vehicleSystem.vehicles[realId]:getIsTabbable();
 	end
 end
 
 function VehicleSort:isHired(realId)
-	if g_currentMission.vehicles[realId] ~= nil and g_currentMission.vehicles[realId].spec_aiJobVehicle ~= nil then
-		if g_currentMission.vehicles[realId].spec_aiJobVehicle.job ~= nil then
+	if g_currentMission.vehicleSystem.vehicles[realId] ~= nil and g_currentMission.vehicleSystem.vehicles[realId].spec_aiJobVehicle ~= nil then
+		if g_currentMission.vehicleSystem.vehicles[realId].spec_aiJobVehicle.job ~= nil then
 			return true
 		end
 	end
@@ -1422,11 +1426,11 @@ end
 
 --function VehicleSort:SyncSorted()
 --	for k, v in ipairs(VehicleSort.Sorted) do
---		if g_currentMission.vehicles[v] ~= nil then
---			if g_currentMission.vehicles[v]['spec_vehicleSort'] ~= nil then
---				g_currentMission.vehicles[v]['spec_vehicleSort']['id'] = g_currentMission.vehicles[v]['id'];
---				g_currentMission.vehicles[v]['spec_vehicleSort']['orderId'] = k;
---				g_currentMission.vehicles[v]['spec_vehicleSort']['realId'] = v;
+--		if g_currentMission.vehicleSystem.vehicles[v] ~= nil then
+--			if g_currentMission.vehicleSystem.vehicles[v]['spec_vehicleSort'] ~= nil then
+--				g_currentMission.vehicleSystem.vehicles[v]['spec_vehicleSort']['id'] = g_currentMission.vehicleSystem.vehicles[v]['id'];
+--				g_currentMission.vehicleSystem.vehicles[v]['spec_vehicleSort']['orderId'] = k;
+--				g_currentMission.vehicleSystem.vehicles[v]['spec_vehicleSort']['realId'] = v;
 --			end
 --		else
 --			-- When there is o vehicle, we can actually drop that entry
@@ -1434,26 +1438,26 @@ end
 --			--table.remove(VehicleSort.Sorted, k);
 --		end
 --	end
---	
+--
 --	-- After selling or resetting vehicles our selectedIndex could point to an non existing vehicle, so better to reset it then
---	if g_currentMission.vehicles[VehicleSort.selectedIndex] == nil then
+--	if g_currentMission.vehicleSystem.vehicles[VehicleSort.selectedIndex] == nil then
 --		VehicleSort.selectedIndex = 1;
 --	end
 --end
 --
 --function VehicleSort:SyncSortedWithGame()
---	local allVeh = {}	
+--	local allVeh = {}
 --	local newOrder = {};
 --	local newSorted = {};
 --
 --	for _, v in ipairs(g_currentMission.vehicles) do
 --		table.insert(allVeh, v);
 --	end
---	
+--
 --	for k, v in ipairs(VehicleSort.Sorted) do
---		VehicleSort:dp(string.format('Sorted Index {%d}, realId {%d}, Vehicle {%s}', k, v, g_currentMission.vehicles[v]['configFileName']), 'SyncSortedWithGame');
---		
---		local newVeh = g_currentMission.vehicles[v];
+--		VehicleSort:dp(string.format('Sorted Index {%d}, realId {%d}, Vehicle {%s}', k, v, g_currentMission.vehicleSystem.vehicles[v]['configFileName']), 'SyncSortedWithGame');
+--
+--		local newVeh = g_currentMission.vehicleSystem.vehicles[v];
 --		newVeh.spec_vehicleSort.orderId = k;
 --		newVeh.spec_vehicleSort.realId = k;
 --		table.insert(newOrder, newVeh);
@@ -1473,18 +1477,18 @@ end
 --		-- Update tab order
 --		--g_inputBinding.events['SWITCH_VEHICLE'].targetObject.loadVehiclesById = newOrder;
 --		--g_inputBinding.events['SWITCH_VEHICLE_BACK'].targetObject.loadVehiclesById = newOrder;
---		
+--
 --		VehicleSort:dp('Write back of orderd vehicles to g_currentMission.vehicles');
 --	end
 --end
 
 function VehicleSort:toggleParkState(selectedIndex)
 	local realId = VehicleSort.Sorted[selectedIndex];
-	local parked = not g_currentMission.vehicles[realId]:getIsTabbable();
+	local parked = not g_currentMission.vehicleSystem.vehicles[realId]:getIsTabbable();
 	if parked then
-		g_currentMission.vehicles[realId]:setIsTabbable(true);
+		g_currentMission.vehicleSystem.vehicles[realId]:setIsTabbable(true);
 	else
-		g_currentMission.vehicles[realId]:setIsTabbable(false);
+		g_currentMission.vehicleSystem.vehicles[realId]:setIsTabbable(false);
 	end
 	VehicleSort:dp(string.format('realId {%d} - parked {%s}', realId, tostring(parked)), 'VehicleSort:toggleParkState');
 end
@@ -1506,8 +1510,8 @@ function VehicleSort:saveConfig()
 end
 
 function VehicleSort:drawStoreImage(realId)
-	if g_currentMission.vehicles[realId] ~= nil and not VehicleSort:isTrain(realId) then
-		local imgFileName = VehicleSort:getStoreImageByConf(g_currentMission.vehicles[realId]['configFileName']);
+	if g_currentMission.vehicleSystem.vehicles[realId] ~= nil and not VehicleSort:isTrain(realId) then
+		local imgFileName = VehicleSort:getStoreImageByConf(g_currentMission.vehicleSystem.vehicles[realId]['configFileName']);
 		--VehicleSort:dp(string.format('configFileName {%s}', configFileName));
 		--VehicleSort:dp(storeItem, 'drawStoreImage');
 		if string.len(imgFileName) > 0 then
@@ -1516,7 +1520,7 @@ function VehicleSort:drawStoreImage(realId)
 				local storeImgX, storeImgY = getNormalizedScreenValues(128, 128)
 				local imgX = 0.5 - VehicleSort.bgW / 2 - storeImgX;
 				local imgY = VehicleSort.config[17][2] - storeImgY;
-				
+
 				-- Background rendering for the images, based on the saved configvalue
 				if VehicleSort.config[19][2] then
 					local bgW = storeImgX;
@@ -1527,7 +1531,7 @@ function VehicleSort:drawStoreImage(realId)
 				end
 				-- Must be rendered after the background, otherwise it's covered by it
 				renderOverlay(storeImage, imgX, imgY, storeImgX, storeImgY)
-				
+
 				if (VehicleSort:getVehImplements(realId) ~= nil) and (imgFileName ~= "data/store/store_empty.png") then
 					local impList = VehicleSort:getVehImplements(realId);
 					for i = 1, VehicleSort.config[24][2] do			-- Limit to the configured amount of implements to show
@@ -1537,7 +1541,7 @@ function VehicleSort:drawStoreImage(realId)
 							local storeImage = createImageOverlay(imgFileName);
 							if storeImage > 0 then
 								local imgY = VehicleSort.config[17][2] - (storeImgY * (i + 1) );
-										
+
 								-- Background rendering for the images, based on the saved configvalue
 								if VehicleSort.config[19][2] then
 									local bgW = storeImgX;
@@ -1572,9 +1576,9 @@ end
 
 function VehicleSort:drawInfobox(realId)
 	if realId ~= nil then
-	
+
 		local textTable = VehicleSort:getInfoTexts(realId);
-	
+
 		setTextAlignment(VehicleSort.tPos.alignmentR);
 		setTextColor(unpack(VehicleSort.tColor.standard));
 		local txtSize = VehicleSort.tPos.sizeSmall;
@@ -1587,7 +1591,7 @@ function VehicleSort:drawInfobox(realId)
 		local infoY = VehicleSort.config[17][2];
 		local txtY = infoY - VehicleSort.tPos.padHeight - txtSize - VehicleSort.tPos.spacing;
 		local txtWidth = getTextWidth(txtSize, "Info");
-		
+
 		local texts = {};
 		for _, t in ipairs(textTable) do
 			local tWidth = getTextWidth(txtSize, t);
@@ -1595,9 +1599,9 @@ function VehicleSort:drawInfobox(realId)
 			txtY = txtY - txtSize - VehicleSort.tPos.spacing;
 			txtWidth = math.max(txtWidth, tWidth);
 		end
-		
-		setTextAlignment(VehicleSort.tPos.alignmentL);		
-		
+
+		setTextAlignment(VehicleSort.tPos.alignmentL);
+
 		-- Background rendering for the infobox, based on the saved configvalue
 		if VehicleSort.config[18][2] then
 			local bgW = txtWidth + (VehicleSort.tPos.padSides * 2);
@@ -1611,16 +1615,16 @@ function VehicleSort:drawInfobox(realId)
 end
 
 function VehicleSort:getInfoTexts(realId)
-	local veh = g_currentMission.vehicles[realId];
-	
+	local veh = g_currentMission.vehicleSystem.vehicles[realId];
+
 	if veh ~= nil then
 		local texts = {};
 		local line = "";
-		
+
 		local doSpacing = false;
-		
+
 		-- This part doesn't work at the moment, but also doesn't make sense as long as we've no tasks
-		
+
 		-- spec_cpCourseManager.courses.1.name
 		--cpAIFieldWorker
 		if VehicleSort:getIsCourseplay(veh) then
@@ -1643,7 +1647,7 @@ function VehicleSort:getInfoTexts(realId)
 			table.insert(texts, line);
 			doSpacing = true;
 		end
-		
+
 		if (veh.ad ~= nil and veh.ad.stateModule ~= nil and veh.ad.stateModule.active) then
 			if veh.ad.stateModule.firstMarker ~= nil and veh.ad.stateModule.mode ~= 1 then
 				local target1 = "";
@@ -1653,18 +1657,18 @@ function VehicleSort:getInfoTexts(realId)
 				else
 					target2 = " <<";
 				end
-				
+
 				line = g_i18n.modEnvironments[VehicleSort.ModName].texts.ad_load .. ": " .. veh.ad.stateModule.firstMarker.name .. target1;
 				table.insert(texts, line);
 				line = g_i18n.modEnvironments[VehicleSort.ModName].texts.ad_unload .. ": " .. veh.ad.stateModule.secondMarker.name .. target2;
 				table.insert(texts, line);
 			elseif veh.ad.stateModule.currentDestination ~= nil then
 				line = g_i18n.modEnvironments[VehicleSort.ModName].texts.ad_destination .. ": " .. veh.ad.stateModule.currentDestination.name
-				table.insert(texts, line);			
+				table.insert(texts, line);
 			end
 			doSpacing = true;
 		end
-		
+
 		if veh.getIsOnField and veh:getIsOnField() then
 			local fieldId = VehicleStatus:getFieldNumber(realId)
 			if fieldId ~= nil and fieldId ~= false then
@@ -1673,7 +1677,7 @@ function VehicleSort:getInfoTexts(realId)
 				doSpacing = true;
 			end
 		end
-		
+
 		if VehicleSort:isHired(realId) then
 			if veh.getCurrentHelper ~= nil and veh:getCurrentHelper() ~= nil then
 				--TODO: g_i18n:getText("ui_helper")
@@ -1685,19 +1689,19 @@ function VehicleSort:getInfoTexts(realId)
 			if not doSpacing then
 				doSpacing = true;
 			end
-		end		
+		end
 
 		-- Some spacing, but just if we actually had some data so far
 		if doSpacing then
 			table.insert(texts, " ");
 			doSpacing = false;
 		end
-		
+
 		-- Operating time; Kudos to Watsi for the idea
 		if veh.getOperatingTime then
 			line = g_i18n.modEnvironments[VehicleSort.ModName].texts.operationHours .. ": " .. VehicleStatus:getOperatingHours(veh);
 			table.insert(texts, line);
-			
+
 			if VehicleSort:getVehImplements(realId) ~= nil then
 				local impHours = VehicleStatus:getVehImplementsOperatingHours(realId);
 				if #impHours > 0 then
@@ -1715,7 +1719,7 @@ function VehicleSort:getInfoTexts(realId)
 			table.insert(texts, " ");
 			doSpacing = false;
 		end
-		
+
 		-- Get vehicle wear and damage
 		if veh.getWearTotalAmount ~= nil then
 			line = g_i18n.modEnvironments[VehicleSort.ModName].texts.wear .. ": " .. VehicleSort:calcPercentage(veh:getWearTotalAmount(), 1) .. " %";
@@ -1732,7 +1736,7 @@ function VehicleSort:getInfoTexts(realId)
 			end
 			doSpacing = true;
 		end
-		
+
 		-- Get vehicle damage
 		if veh.getDamageAmount then
 			line = g_i18n.modEnvironments[VehicleSort.ModName].texts.damage .. ": " .. VehicleSort:calcPercentage(veh:getDamageAmount(), 1) .. " %";
@@ -1749,22 +1753,22 @@ function VehicleSort:getInfoTexts(realId)
 			end
 			doSpacing = true;
 		end
-		
+
 		-- Some spacing, but just if we actually had some data so far
 		if doSpacing then
 			table.insert(texts, " ");
 			doSpacing = false;
 		end
-		
+
 		-- Get vehicle Dirt
-		local dirtPerc = VehicleStatus:getDirtPercForObject(g_currentMission.vehicles[realId]);
+		local dirtPerc = VehicleStatus:getDirtPercForObject(g_currentMission.vehicleSystem.vehicles[realId]);
 		if dirtPerc ~= nil then
 			line = g_i18n.texts.setting_dirt .. ": " .. dirtPerc .. " %";
-			table.insert(texts, line);		
-			doSpacing = true;			
+			table.insert(texts, line);
+			doSpacing = true;
 		end
-		
-		if VehicleSort:getVehImplements(realId) ~= nil then		
+
+		if VehicleSort:getVehImplements(realId) ~= nil then
 			local impDirt = VehicleStatus:getVehImplementsDirt(realId);
 			if #impDirt > 0 then
 				for i=1, VehicleSort.config[25][2] do
@@ -1772,8 +1776,8 @@ function VehicleSort:getInfoTexts(realId)
 				end
 			end
 			doSpacing = true;
-		end		
-		
+		end
+
 		-- Some spacing, but just if we actually had some data so far
 		if doSpacing then
 			table.insert(texts, " ");
@@ -1786,7 +1790,7 @@ function VehicleSort:getInfoTexts(realId)
 			table.insert(texts, line);
 			doSpacing = true;
 		end
-		
+
 		if VehicleSort:getVehImplements(realId) ~= nil then
 			local impFill = VehicleSort:getVehImplementsFillInfobox(realId);
 			if #impFill > 0 then
@@ -1804,7 +1808,7 @@ function VehicleSort:getInfoTexts(realId)
 			table.insert(texts, " ");
 			doSpacing = false;
 		end
-		
+
 		if (not VehicleSort:isTrain(realId)) or (not VehicleSort:isCrane(realId)) then
 			-- Diesel & DEF FillLevel
 			-- FS22 local level, capacity = VehicleStatus:getDieselLevel(realId)
@@ -1812,21 +1816,21 @@ function VehicleSort:getInfoTexts(realId)
 				line = g_i18n.texts.fillType_diesel .. ": " .. level .. "/" .. capacity .. " " .. g_i18n.texts.unit_liter;
 				table.insert(texts, line);
 			end
-			
+
 			--FS22 local level, capacity = VehicleStatus:getDefLevel(realId)
 			if level ~= nil and capacity ~= nil then
 				line = g_i18n.texts.fillType_def_short .. ": " .. level .. "/" .. capacity .. " " .. g_i18n.texts.unit_liter;
 				table.insert(texts, line);
 			end
 		end
-		
+
 		-- Speed
 		line = g_i18n.modEnvironments[VehicleSort.ModName].texts.speed .. ": " .. VehicleStatus:getSpeedStr(veh);
 		table.insert(texts, line);
-		
+
 		-- Some spacing
 		table.insert(texts, " ");
-		
+
 		-- Motor on/TurnedOn, Lights
 		if VehicleStatus:getIsMotorStarted(veh) then
 			line = g_i18n.modEnvironments[VehicleSort.ModName].texts.motor .. ": " .. g_i18n.texts.ui_on;
@@ -1835,9 +1839,9 @@ function VehicleSort:getInfoTexts(realId)
 		end
 		if not doSpacing then
 			doSpacing = true;
-		end		
+		end
 		table.insert(texts, line);
-		
+
 		if VehicleStatus:getIsTurnedOn(veh) then
 			line = g_i18n.modEnvironments[VehicleSort.ModName].texts.turnedOn .. ": " .. g_i18n.texts.ui_on;
 		else
@@ -1845,9 +1849,9 @@ function VehicleSort:getInfoTexts(realId)
 		end
 		if not doSpacing then
 			doSpacing = true;
-		end				
-		table.insert(texts, line);		
-		
+		end
+		table.insert(texts, line);
+
 		if VehicleStatus:getIsLightTurnedOn(veh) then
 			line = g_i18n.modEnvironments[VehicleSort.ModName].texts.lights .. ": " .. g_i18n.texts.ui_on;
 		else
@@ -1855,13 +1859,13 @@ function VehicleSort:getInfoTexts(realId)
 		end
 		if not doSpacing then
 			doSpacing = true;
-		end				
+		end
 		table.insert(texts, line);
-		
+
 		-- Implement status, lowered and turnedOn
 		if VehicleSort:getVehImplements(realId) ~= nil then
 			local impStatus = VehicleStatus:getImplementStatus(realId);
-			
+
 			if impStatus ~= nil and #impStatus > 0 then		-- We've to check for nil again, as we filter out frontloaders
 				-- Some spacing, but just if we actually had some data so far
 				-- This spacing is actually meant after the light state. But we just want it if there are implements, otherwise we've too much spacing at the end of the infobox
@@ -1869,7 +1873,7 @@ function VehicleSort:getInfoTexts(realId)
 					table.insert(texts, " ");
 					doSpacing = false;
 				end
-			
+
 				for _, v in ipairs(impStatus) do
 					if v.isLowered ~= nil or v.isTurnedOn ~= nil then
 						local yesno = '';
@@ -1898,7 +1902,7 @@ function VehicleSort:getVehImplementsFillInfobox(realId)
 	if implements ~= nil then
 		for i = 1, #implements do
 			local imp = implements[i];
-			
+
 			if imp ~= nil and imp.object ~= nil and (string.len(VehicleSort:getFillDisplay(imp.object)) > 1) then
 				line = string.gsub(VehicleSort:getAttachmentName(imp.object), "%s$", "") .. " | " .. g_i18n.modEnvironments[VehicleSort.ModName].texts.fillLevel .. ": " .. VehicleSort:getFillDisplay(imp.object, true);
 				table.insert(texts, line);
@@ -1939,12 +1943,12 @@ function VehicleSort:tabVehicle(backwards)
 	if #VehicleSort.Sorted == 0 or #VehicleSort.Sorted ~= #VehicleSort:getOrderedVehicles() then
 		VehicleSort.Sorted = VehicleSort:getOrderedVehicles();
 	end
-	
+
 	-- Show the warning in case we've still no vehicles
 	if #VehicleSort.Sorted == 0 then
 		VehicleSort:showNoVehicles();
 	end
-	
+
 	if g_currentMission.controlledVehicle == nil then
 		conId = nil;
 		nextId = 1;
@@ -1953,13 +1957,13 @@ function VehicleSort:tabVehicle(backwards)
 
 		VehicleSort:getNextInTabList(conId, backwards);
 	end
-	
+
 	VehicleSort:dp(string.format('conId {%s} - nextId {%d}', tostring(conId), nextId), 'tabVehicle');
 
 	-- We need the loop to check which vehicle we can actually enter
 	local run = 1;
-	if g_currentMission.vehicles[(VehicleSort.Sorted[nextId])] ~= nil and g_currentMission.vehicles[(VehicleSort.Sorted[nextId])].getIsControlled then
-		while g_currentMission.vehicles[(VehicleSort.Sorted[nextId])]:getIsControlled() or VehicleSort:isParked(VehicleSort.Sorted[nextId]) do
+	if g_currentMission.vehicleSystem.vehicles[(VehicleSort.Sorted[nextId])] ~= nil and g_currentMission.vehicleSystem.vehicles[(VehicleSort.Sorted[nextId])].getIsControlled then
+		while g_currentMission.vehicleSystem.vehicles[(VehicleSort.Sorted[nextId])]:getIsControlled() or VehicleSort:isParked(VehicleSort.Sorted[nextId]) do
 
 			VehicleSort:getNextInTabList(nextId, backwards)
 
@@ -1970,9 +1974,9 @@ function VehicleSort:tabVehicle(backwards)
 			run = run + 1;
 		end
 	end
-	realVeh = g_currentMission.vehicles[VehicleSort.Sorted[nextId]];
-	g_currentMission:requestToEnterVehicle(realVeh);
-	
+	realVeh = g_currentMission.vehicleSystem.vehicles[VehicleSort.Sorted[nextId]];
+	g_localPlayer:requestToEnterVehicle(realVeh);
+
 end
 
 function VehicleSort:getNextInTabList(orderId, backwards)
@@ -1981,7 +1985,7 @@ function VehicleSort:getNextInTabList(orderId, backwards)
 			nextId = #VehicleSort.Sorted;
 		else
 			nextId = orderId - 1;
-		end			
+		end
 	else
 		if orderId == #VehicleSort.Sorted then
 			nextId = 1;
@@ -2001,9 +2005,9 @@ function VehicleSort:easyTab(realVeh)
 	else
 		VehicleSort:dp('realVeh is not present, so we are going to tab', 'easyTab');
 		if #VehicleSort.easyTabTable == 1 then
-			g_currentMission:requestToEnterVehicle(VehicleSort.easyTabTable[1]);
+			g_localPlayer:requestToEnterVehicle(VehicleSort.easyTabTable[1]);
 		elseif #VehicleSort.easyTabTable > 1 then
-			g_currentMission:requestToEnterVehicle(VehicleSort.easyTabTable[2]);
+			g_localPlayer:requestToEnterVehicle(VehicleSort.easyTabTable[2]);
 			--Shift table again to have the proper order the next time
 			table.insert(VehicleSort.easyTabTable, 1, VehicleSort.easyTabTable[2]);
 			table.remove(VehicleSort.easyTabTable, 3);
@@ -2012,20 +2016,20 @@ function VehicleSort:easyTab(realVeh)
 end
 
 function VehicleSort:handlePostloadTrains(realId)
-	local id = g_currentMission.vehicles[realId]['id'];
-	
+	local id = g_currentMission.vehicleSystem.vehicles[realId]['id'];
+
 	if VehicleSort.loadTrainStatus[id] ~= nil then
 		if VehicleSort.loadTrainStatus[id]['motorTurnedOn'] then
-			g_currentMission.vehicles[realId]:startMotor();
+			g_currentMission.vehicleSystem.vehicles[realId]:startMotor();
 		else
-			g_currentMission.vehicles[realId]:setLocomotiveState(Locomotive.STATE_MANUAL_TRAVEL_ACTIVE);
-			g_currentMission.vehicles[realId]:stopMotor();
+			g_currentMission.vehicleSystem.vehicles[realId]:setLocomotiveState(Locomotive.STATE_MANUAL_TRAVEL_ACTIVE);
+			g_currentMission.vehicleSystem.vehicles[realId]:stopMotor();
 		end
 
-		g_currentMission.vehicles[realId]:setIsTabbable(not VehicleSort.loadTrainStatus[id]['isParked']);
-		
-		VehicleSort:dp(string.format('Train realId {%d} should be fine now. isParked {%s}, motorTurnedOn {%s}', realId, 
-							tostring(VehicleSort.loadTrainStatus[id]['isParked']), tostring(VehicleSort.loadTrainStatus[id]['motorTurnedOn'])));		
+		g_currentMission.vehicleSystem.vehicles[realId]:setIsTabbable(not VehicleSort.loadTrainStatus[id]['isParked']);
+
+		VehicleSort:dp(string.format('Train realId {%d} should be fine now. isParked {%s}, motorTurnedOn {%s}', realId,
+							tostring(VehicleSort.loadTrainStatus[id]['isParked']), tostring(VehicleSort.loadTrainStatus[id]['motorTurnedOn'])));
 
 							VehicleSort.loadTrainStatus[id] = nil;
 		VehicleSort.loadTrainStatus.entries = VehicleSort.loadTrainStatus.entries - 1;
@@ -2035,13 +2039,13 @@ end
 
 function VehicleSort:placeableSaveToXMLFile(xmlFile, key, usedModNames)
 	VehicleSort:dp(string.format('key {%s}', key), 'placeableSaveToXMLFile');
-	
+
 	if xmlFile ~= nil and key ~= nil and self.vehicle.spec_vehicleSort ~= nil then
 		local key = key..".vehicleSort";
 		if self.vehicle.spec_vehicleSort.orderId ~= nil then
 			setXMLInt(xmlFile, key.."#UserOrder", self.vehicle.spec_vehicleSort.orderId);
 		end
-		
+
 		if VehicleSort:isParked(self.vehicle.spec_vehicleSort.realId) then
 			setXMLBool(xmlFile, key.."#isParked", true);
 		end
@@ -2051,29 +2055,29 @@ end
 function VehicleSort:placeableLoadFromXMLFile(superFunc, xmlFile, key, resetVehicles)
 
 	if xmlFile == nil and key == nil then
-		return false;		
+		return false;
 	end
 
 	local mainLoad = superFunc(self, xmlFile, key, resetVehicles);
-	
+
 	if mainLoad then
-		VehicleSort:dp(string.format('key {%s}', key), 'placeableLoadFromXMLFile');		
-		
+		VehicleSort:dp(string.format('key {%s}', key), 'placeableLoadFromXMLFile');
+
 		local key = key..".vehicleSort";
-		
+
 		if hasXMLProperty(xmlFile, key) then
 			local orderId = getXMLInt(xmlFile, key.."#UserOrder");
 			if orderId ~= nil then
 				VehicleSort:dp(string.format('Loaded orderId {%d} for placeableId {%d}', orderId, self.id), 'placeableLoadFromXMLFile');
 			end
-			
+
 			if self.vehicle.spec_vehicleSort ~= nil then
 				self.vehicle.spec_vehicleSort.id = self.id;
 				if orderId ~= nil then
 					self.vehicle.spec_vehicleSort.orderId = orderId;
 				end
 			end
-			
+
 			local isParked = Utils.getNoNil(getXMLBool(xmlFile, key.."#isParked"), false);
 			if isParked then
 				VehicleSort:dp(string.format('Set isParked {%s} for orderId {%d} / vehicleId {%d}', tostring(isParked), orderId, self.id), 'onPostLoad');
@@ -2106,7 +2110,7 @@ function VehicleSort:overwriteDefaultTabBinding()
 				g_inputBinding:setActionEventActive(eventsTab[1].id, state)
 			end
 		end
-		
+
 		if g_inputBinding.nameActions.SWITCH_VEHICLE_BACK.bindings[1] ~= nil and g_inputBinding.nameActions.SWITCH_VEHICLE_BACK.bindings[1].isActive ~= state then
 			--VehicleSort:dp(string.format("SWITCH_VEHICLE_BACK does not equal state. state = {%s} Going to change it.", tostring(state)), "setTabBinding")
 			local eventsShiftTab = InputBinding.getEventsForActionName(g_inputBinding, "SWITCH_VEHICLE_BACK")
@@ -2133,7 +2137,7 @@ function VehicleSort:showCenteredBlinkingWarning(text, blinkDuration)
 	if type(text) == 'table' then
 		VehicleSort:dp(string.format('We got a table to handle'), 'showCenteredBlinkingWarning');
 		local textWidth = 0;
-		
+
 		--First we get the longest text as baseline
 		for i=1, #text do
 			local length = string.len(text[i])
@@ -2141,9 +2145,9 @@ function VehicleSort:showCenteredBlinkingWarning(text, blinkDuration)
 				textWidth = length
 			end
 		end
-		
+
 		VehicleSort:dp(string.format('Max textWidth: {%d}', textWidth), 'showCenteredBlinkingWarning');
-		
+
 		for i=1, #text do
 			VehicleSort:dp(string.format('Line: {%s}', text[i]), 'showCenteredBlinkingWarning');
 			if string.len(text[i]) < textWidth then

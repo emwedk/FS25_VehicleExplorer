@@ -1,6 +1,6 @@
 $srcPath = $PSScriptRoot
 $dstPath = $PSScriptRoot
-$dstFilename = "FS22_VehicleExplorer.zip"
+$dstFilename = "FS25_VehicleExplorer.zip"
 
 $tmpPath = Join-Path $env:TMP "TmpZip"
 
@@ -32,7 +32,7 @@ if($srcPath.Length -gt 0 -and $dstPath.Length -gt 0)
 
 
     foreach($f in $allFiles)
-    {   
+    {
         if( -not $ignorelist.contains($f.DirectoryName.ToString().Replace("$srcPath", "").Replace("\","/")) )
         {
             if( -not $ignorelist.contains($f.FullName.ToString().Replace("$srcPath", "").Replace("\","/")) )

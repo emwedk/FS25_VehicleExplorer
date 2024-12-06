@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="utf-8" standalone="no" ?>
-<modDesc descVersion="79">
-	<author>sperrgebiet</author>
+<modDesc descVersion="92">
+	<author>teknogeek</author>
 	<title>
         	<en>Vehicle Explorer</en>
         	<de>Vehicle Explorer</de>
         	<it>Esplora Veicoli</it>
 	</title>
 
-	<version>0.2.0.5</version>
-  
+	<version>1.0.0.0</version>
+
 	<description>
 		<en>
 <![CDATA[
@@ -41,22 +41,22 @@ Complimenti a Ifko[nator] per lo script RegisterSpecialization.
 ]]>
 		</it>
 	</description>
-	
+
 	<!-- "translations/l10n_<language>.xml -->
-	<l10n filenamePrefix="translations/l10n" />	
+	<l10n filenamePrefix="translations/l10n" />
 
 	<iconFilename>modIcon.dds</iconFilename>
-	
+
 	<multiplayer supported="false" />
 
 	<extraSourceFiles>
 		<sourceFile filename="RegisterSpecialization.lua" />
 	</extraSourceFiles>
 
-	<registerSpecializations debugPriority="0">
+	<registerSpecializations debugPriority="3">
 		<registerSpecialization name="vehicleSort" className="VehicleSort" filename="VehicleSort.lua" searchedSpecializations="Enterable"/>
 		<registerSpecialization name="vehicleStatus" className="VehicleStatus" filename="VehicleStatus.lua" searchedSpecializations="Motorized TurnOnVehicle Lights"/>
-	</registerSpecializations>	
+	</registerSpecializations>
 
 	<actions>
 		<action name="vsToggleList" 		axisType="HALF" />
@@ -74,7 +74,7 @@ Complimenti a Ifko[nator] per lo script RegisterSpecialization.
 		<action name="vsEasyTab" 			axisType="HALF" />
 	</actions>
 
-	<inputBinding>	
+	<inputBinding>
 		<actionBinding action="vsToggleList">
 			<binding device="KB_MOUSE_DEFAULT" input="KEY_lalt KEY_v" index="1" />
 			<binding device="KB_MOUSE_DEFAULT" input="MOUSE_BUTTON_X1" axisComponent="+" neutralInput="0" index="3"/>
@@ -99,7 +99,7 @@ Complimenti a Ifko[nator] per lo script RegisterSpecialization.
 		</actionBinding>
 		<actionBinding action="vsShowConfig">
 			<binding device="KB_MOUSE_DEFAULT" input="KEY_lalt KEY_KP_minus" index="1" />
-		</actionBinding>		
+		</actionBinding>
 		<actionBinding action="vsTogglePark">
 			<binding device="KB_MOUSE_DEFAULT" input="KEY_lalt KEY_p" index="1" />
 		</actionBinding>
@@ -115,6 +115,6 @@ Complimenti a Ifko[nator] per lo script RegisterSpecialization.
 		<actionBinding action="vsEasyTab">
 			<binding device="KB_MOUSE_DEFAULT" input="KEY_lctrl KEY_tab" index="1" />
 		</actionBinding>
-    </inputBinding>	
+    </inputBinding>
 
 </modDesc>

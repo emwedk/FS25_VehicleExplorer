@@ -7,12 +7,12 @@ VehicleStatus = {};
 -- It's great that Giants gets rid of functions as part of an update. Now we can do things more complicated than before
 --VehicleStatus.ModName = g_currentModName
 --VehicleStatus.ModDirectory = g_currentModDirectory
-VehicleStatus.ModName = "FS22_VehicleExplorer";
-VehicleStatus.ModDirectory = g_modManager.nameToMod.FS22_VehicleExplorer.modDir
-VehicleStatus.Version = "0.2.0.1";
+VehicleStatus.ModName = "FS25_VehicleExplorer";
+VehicleStatus.ModDirectory = g_modManager.nameToMod.FS25_VehicleExplorer.modDir
+VehicleStatus.Version = "1.0.0.0";
 
 
-VehicleStatus.debug = fileExists(VehicleStatus.ModDirectory ..'debug');
+VehicleStatus.debug = true; --fileExists(VehicleStatus.ModDirectory ..'debug');
 
 print(string.format('VehicleStatus v%s - DebugMode %s)', VehicleStatus.Version, tostring(VehicleStatus.debug)));
 
@@ -22,7 +22,7 @@ end
 
 function VehicleStatus.registerEventListeners(vehicleType)
 	local functionNames = {	"onPreLoad", "onLoad", "onPostLoad", "saveToXMLFile" };
-	
+
 	for _, functionName in ipairs(functionNames) do
 		SpecializationUtil.registerEventListener(vehicleType, functionName, VehicleStatus);
 	end
@@ -63,7 +63,7 @@ function VehicleStatus:onPostLoad(savegame)
 				self:startMotor();
 			end
 		end
-		
+
 		if self.spec_turnOnVehicle ~= nil then
 			local isTurnedOn = Utils.getNoNil(savegame.xmlFile:getValue(savegame.key..".vehicleStatus#isTurnedOn"), false);
 			VehicleSort:dp(string.format('isTurnedOn: {%s} for {%s} | savegame.key: {%s}', tostring(isTurnedOn), self.configFileName, savegame.key .. ".vehicleStatus#isTurnedOn"), 'VehicleStatus:onPostLoad');
@@ -71,7 +71,7 @@ function VehicleStatus:onPostLoad(savegame)
 				self:setIsTurnedOn(isTurnedOn);
 			end
 		end
-		
+
 		if self.spec_lights ~= nil and self.spec_enterable ~= nil then
 			local lightsMask = Utils.getNoNil(savegame.xmlFile:getValue(savegame.key..".vehicleStatus#lightsMask"), 0);
 			VehicleSort:dp(string.format('lightsMask: {%s} for {%s} | savegame.key: {%s}', tostring(lightsMask), self.configFileName, savegame.key .. ".vehicleStatus#lightsMask"), 'VehicleStatus:onPostLoad');
@@ -90,7 +90,7 @@ function VehicleStatus:onPostLoad(savegame)
 			if turnLightsState > 0 then
 				self:setTurnLightState(turnLightsState, true);
 			end
-			
+
 			local brakeLightsOn = Utils.getNoNil(savegame.xmlFile:getValue(savegame.key..".vehicleStatus#brakeLightsOn"), false);
 			VehicleSort:dp(string.format('brakeLightsOn: {%s} for {%s} | savegame.key: {%s}', tostring(brakeLightsOn), self.configFileName, savegame.key .. ".vehicleStatus#brakeLightsOn"), 'VehicleStatus:onPostLoad');
 			if brakeLightsOn then
@@ -99,7 +99,7 @@ function VehicleStatus:onPostLoad(savegame)
 		end
 
 		-- Handling trains differently
-		if self.typeName == 'locomotive' then			
+		if self.typeName == 'locomotive' then
 			if VehicleSort.loadTrainStatus[self.id] == nil then
 				VehicleSort.loadTrainStatus[self.id] = {};
 				VehicleSort.loadTrainStatus.entries = VehicleSort.loadTrainStatus.entries + 1;
@@ -116,12 +116,12 @@ function VehicleStatus:saveToXMLFile(xmlFile, key)
 			xmlFile:setValue(key.."#isMotorStarted", VehicleStatus:getIsMotorStarted(self))
 			--setXMLBool(xmlFile, key .. '#isMotorStarted', VehicleStatus:getIsMotorStarted(self));
 		end
-		
+
 		if VehicleStatus:getIsTurnedOn(self) then
 			xmlFile:setValue(key.."#isTurnedOn", VehicleStatus:getIsTurnedOn(self))
 			--setXMLBool(xmlFile, key .. '#isTurnedOn', VehicleStatus:getIsTurnedOn(self));
 		end
-		
+
 		if VehicleStatus:getIsLightTurnedOn(self) then
 			xmlFile:setValue(key.."#lightsMask", self:getLightsTypesMask())
 			--setXMLInt(xmlFile, key .. '#lightsMask', self:getLightsTypesMask());
@@ -140,8 +140,8 @@ function VehicleStatus:saveToXMLFile(xmlFile, key)
 		if VehicleStatus:getIsBrakeLightsOn(self) then
 			xmlFile:setValue(key.."#brakeLightsOn", VehicleStatus:getIsBrakeLightsOn(self))
 			--setXMLBool(xmlFile, key .. '#brakeLightsOn', VehicleStatus:getIsBrakeLightsOn(self));
-		end	
-		
+		end
+
 	end
 end
 
@@ -198,7 +198,7 @@ function VehicleStatus:getSpeedStr(vehObj)
 			speed = math.floor(vehObj:getLastSpeed())
 			unit = g_i18n.texts.unit_kmh
 		end
-		
+
 		return tostring(speed) .. " " .. unit;
 	end
 end
@@ -273,16 +273,16 @@ function VehicleStatus:getVehImplementsWear(realId)
 
 	local implements = VehicleSort:getVehImplements(realId);
 	if implements ~= nil then
-	
+
 		for i = 1, #implements do
 			local imp = implements[i];
-			
+
 			if (imp ~= nil and imp.object ~= nil and imp.object.getWearTotalAmount ~= nil) then
 				line = string.gsub(VehicleSort:getAttachmentName(imp.object), "%s$", "") .. " | " .. g_i18n.modEnvironments[VehicleSort.ModName].texts.wear .. ": " .. VehicleSort:calcPercentage(imp.object:getWearTotalAmount(), 1) .. " %";
 				table.insert(texts, line);
 			end
 		end
-		
+
 		return texts;
 	else
 		return nil;
@@ -295,16 +295,16 @@ function VehicleStatus:getVehImplementsDamage(realId)
 
 	local implements = VehicleSort:getVehImplements(realId);
 	if implements ~= nil then
-	
+
 		for i = 1, #implements do
 			local imp = implements[i];
-			
+
 			if (imp ~= nil and imp.object ~= nil and imp.object.getDamageAmount ~= nil) then
 				line = string.gsub(VehicleSort:getAttachmentName(imp.object), "%s$", "") .. " | " .. g_i18n.modEnvironments[VehicleSort.ModName].texts.damage .. ": " .. VehicleSort:calcPercentage(imp.object:getDamageAmount(), 1) .. " %";
 				table.insert(texts, line);
 			end
 		end
-		
+
 		return texts;
 	else
 		return nil;
@@ -336,16 +336,16 @@ function VehicleStatus:getVehImplementsDirt(realId)
 
 	local implements = VehicleSort:getVehImplements(realId);
 	if implements ~= nil then
-	
+
 		for i = 1, #implements do
 			local imp = implements[i];
-			
+
 			if (imp ~= nil and imp.object ~= nil and VehicleStatus:getDirtPercForObject(imp.object) ~= nil) then
 				line = string.gsub(VehicleSort:getAttachmentName(imp.object), "%s$", "") .. " | " .. g_i18n.texts.setting_dirt .. ": " .. VehicleStatus:getDirtPercForObject(imp.object) .. " %";
 				table.insert(texts, line);
 			end
 		end
-		
+
 		return texts;
 	else
 		return nil;
@@ -407,21 +407,21 @@ function VehicleStatus:getImplementStatus(realId)
 				if imp.object.typeName ~= 'attachableFrontloader' then
 					local isTurnedOn = nil;
 					local isLowered = nil;
-					
+
 					if imp.object.getIsTurnedOn then
 						isTurnedOn = imp.object:getIsTurnedOn();
 					end
 					if imp.object.getIsLowered then
 						isLowered = imp.object:getIsLowered();
 					end
-					
+
 					local entry = {jointDescIndex = imp.object.jointDescIndex, isTurnedOn = isTurnedOn, isLowered = isLowered, name = VehicleSort:getAttachmentName(imp.object)};
 					table.insert(impStatus, entry);
 				end
 			end
 		end
 	end
-	
+
 	if #impStatus > 0 then
 		return impStatus;
 	end
@@ -429,11 +429,11 @@ end
 
 function VehicleStatus:getFieldNumber(realId)
 	local veh = g_currentMission.vehicles[realId];
-	
+
 	if veh.getIsOnField and veh:getIsOnField() then
 		--Took the majority of the getFieldNumber code from VehicleInspector by HappyLooser. Kudos to him/her
 		local veh_pos_x, veh_pos_y, veh_pos_z = getWorldTranslation(veh.components[1].node)
-		
+
 		for fieldNum,fieldDef in ipairs(g_fieldManager.fields) do
 			for a=1, #fieldDef.getFieldStatusPartitions do
 				local b = fieldDef.getFieldStatusPartitions[a];
@@ -443,8 +443,8 @@ function VehicleStatus:getFieldNumber(realId)
 				if distance <= distanceMax then
 					--print("distance...".. tostring(distance).. " - maxDistance...".. tostring(distanceMax))
 					return fieldDef.fieldId;
-				end;				
-			end;			
+				end;
+			end;
 		end;
 
 	else
@@ -452,7 +452,7 @@ function VehicleStatus:getFieldNumber(realId)
 	end
 end
 
-function VehicleStatus:getOperatingHours(obj)	
+function VehicleStatus:getOperatingHours(obj)
 	if obj.getOperatingTime then
 		local milliSeconds = obj:getOperatingTime()
 		local hours = string.format("%.1f h", (milliSeconds / 3600000));
@@ -466,16 +466,16 @@ function VehicleStatus:getVehImplementsOperatingHours(realId)
 
 	local implements = VehicleSort:getVehImplements(realId);
 	if implements ~= nil then
-	
+
 		for i = 1, #implements do
 			local imp = implements[i];
-			
+
 			if (imp ~= nil and imp.object ~= nil and imp.object.getOperatingTime ~= nil) then
 				line = string.gsub(VehicleSort:getAttachmentName(imp.object), "%s$", "") .. " | " .. g_i18n.modEnvironments[VehicleSort.ModName].texts.operationHours .. ": " .. VehicleStatus:getOperatingHours(imp.object);
 				table.insert(texts, line);
 			end
 		end
-		
+
 		return texts;
 	else
 		return nil;
