@@ -1,13 +1,13 @@
-# VehicleExplorer for FS22 aka VeEx22
-**This is a revamp of the good old VehicleSort from FS17**
+# VehicleExplorer for FS25 aka VeEx25
+**This is an update of VehicleExplorer from FS22**
+
+**This update is WIP**
+
 
 For beginners: VehicleExplorer helps you organize your vehicles, by showing you a list which can be organized, well, sorted by you.
 Besides that it has a couple of additional functionality. See below.
 
 Feedback, this readme and additional information incl. source code can be find at: https://github.com/sperrgebiet/FS22_VehicleExplorer
-
-**Please download the latest version directly from GitHub**
-[Latest version](https://github.com/sperrgebiet/FS22_VehicleExplorer/blob/main/FS22_VehicleExplorer.zip?raw=true)
 
 ### Features
 * List of all steerable vehicles (Specialization: Enterable)
@@ -49,7 +49,7 @@ Feedback, this readme and additional information incl. source code can be find a
   * With VehicleExplorer & Tardis you can select a vehicle on the list, and teleport that to any location without entering it. You can also configure
   if you want to enter the vehicle after teleportation or just drop the vehicle to another location
   * With Tardis Map Hotspots you can again, select a vehicle and quickly teleport that to one of those hotspots
-  
+
 
 ### Known issues
 * Although you can change all the keyboard bindings, the mouse actions are hardcoded for now
@@ -179,7 +179,7 @@ Feedback, dieses ReadMe und weitere Informationen sowie der Quelltext findet sic
 ### Inkompatible Mods
 * ~~SpeedControl~~
   * ~~Beide funktionieren einwandfrei nebeneinander. Es existiert nur eine Doppelbelegung der Tastaturbelegung. Im Spielmenü setze einfach neue Tasten für Taste 1, Taste 2, Taste NumPad Plus, Taste NumPad Minus~~
-  * Habe die Standard Tastenbelegung verändert. Somit gibt es keinen Konflikt mehr.  
+  * Habe die Standard Tastenbelegung verändert. Somit gibt es keinen Konflikt mehr.
 
 ## Standard Tastenbelegung
 |Key Kombi|Aktion|
