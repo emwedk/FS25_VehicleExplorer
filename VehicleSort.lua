@@ -249,6 +249,7 @@ function VehicleSort:RegisterActionEvents(isSelected, isOnActiveVehicle)
 		end
 	end
 	g_inputBinding:endActionEventsModification()
+	g_inputBinding:beginActionEventsModification(g_inputBinding.currentContextName)
 end
 
 function VehicleSort.registerEventListeners(vehicleType)
