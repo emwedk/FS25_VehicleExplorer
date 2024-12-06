@@ -1,7 +1,7 @@
 # VehicleExplorer for FS25 aka VeEx25
 **This is an update of VehicleExplorer from FS22**
 
-**This update is still WIP**
+**This update has not been thoroughly tested yet**
 
 For beginners: VehicleExplorer helps you organize your vehicles, by showing you a list which can be organized, well, sorted by you.
 Besides that it has a couple of additional functionality. See below.
@@ -106,5 +106,5 @@ sperrgebiet for the FS22 Vehicle Explorer mod
 
 
 ## Latest Version
-1.0.0.0 (WIP) - Updated for FS25
+1.0.0.0 - Updated for FS25
 
