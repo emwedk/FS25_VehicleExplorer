@@ -13,7 +13,7 @@ VehicleSort.ModDirectory = g_modManager.nameToMod.FS25_VehicleExplorer.modDir
 VehicleSort.Version = "1.0.0.0";
 
 
-VehicleSort.debug = true; -- fileExists(VehicleSort.ModDirectory ..'debug');
+VehicleSort.debug = fileExists(VehicleSort.ModDirectory ..'debug');
 
 VehicleSort.firstRun = true;
 
@@ -69,18 +69,23 @@ VehicleSort.config = {											--Id		-Order in configMenu
 };
 
 VehicleSort.tColor = {}; -- text colours
-VehicleSort.tColor.isParked 	= {0.5, 0.5, 0.5, 0.7};   -- grey
-VehicleSort.tColor.locked 		= {1.0, 0.0, 0.0, 1.0};   -- red
-VehicleSort.tColor.selected 	= {0.8879, 0.1878, 0.0037, 1.0}; -- orange
-VehicleSort.tColor.standard 	= {1.0, 1.0, 1.0, 1.0}; -- white
-VehicleSort.tColor.standard2 	= {0.8228, 0.8388, 0.7304, 1.0}; -- eggcolor
-VehicleSort.tColor.hired 		= {0.0, 0.5, 1.0, 1.0}; 	-- blue
-VehicleSort.tColor.courseplay 	= {0.270, 0.55, 0.88, 1.0}; 	-- baby blue
-VehicleSort.tColor.followme 	= {0.92, 0.31, 0.69, 1.0}; 	-- light pink
-VehicleSort.tColor.autodrive 	= {0.03, 0.78, 0.85, 1.0}; 	-- aqua/turquoise
-VehicleSort.tColor.aive 		= {1.0, 0.5, 0.2, 1.0}; 	-- orange
-VehicleSort.tColor.self  		= {0.0, 1.0, 0.0, 1.0}; -- green
-VehicleSort.tColor.motorOn		= {0.9301, 0.7605, 0.0232, 1.0}; -- yellow
+VehicleSort.tColor.isParked 	= Color.PRESETS.GRAY;   -- grey
+VehicleSort.tColor.locked 		= Color.PRESETS.RED;   -- red
+VehicleSort.tColor.selected 	= Color.PRESETS.ORANGE; -- orange
+VehicleSort.tColor.standard 	= Color.PRESETS.WHITE; -- white
+VehicleSort.tColor.standard2 	= Color.fromRGBA(210, 214, 186, 255); -- eggcolor
+VehicleSort.tColor.hired 			= Color.fromRGBA(0, 127, 255, 255); 	-- blue
+-- VehicleSort.tColor.hired 			= Color.PRESETS.BLUE; 	-- blue
+VehicleSort.tColor.courseplay = Color.fromRGBA(69, 140, 224, 255); 	-- baby blue
+-- VehicleSort.tColor.courseplay = Color.PRESETS.SKYBLUE; 	-- baby blue
+VehicleSort.tColor.followme 	= Color.fromRGBA(235, 79, 176, 255); 	-- light pink
+-- VehicleSort.tColor.followme 	= Color.PRESETS.LIGHTPINK; 	-- light pink
+VehicleSort.tColor.autodrive 	= Color.fromRGBA(8, 199, 217, 255); 	-- aqua/turquoise
+-- VehicleSort.tColor.autodrive 	= Color.PRESETS.TURQOUISE; 	-- aqua/turquoise
+VehicleSort.tColor.aive 			= Color.PRESETS.ORANGE; 	-- orange
+VehicleSort.tColor.self 			= Color.PRESETS.GREEN; -- green
+
+VehicleSort.tColor.motorOn 		= Color.fromRGBA(237, 194, 6, 255); -- yellow
 
 VehicleSort.keyCon = 'VeExConfig';
 VehicleSort.selectedConfigIndex = 1;
@@ -536,15 +541,15 @@ function VehicleSort:drawConfig()
 
 
 		-- We render the heading seperately to have it centered, despite the user config for the list
-	local headingY = VehicleSort.tPos.y + size + (VehicleSort.tPos.padHeight * 6);
+	local headingY = VehicleSort.tPos.y + size + VehicleSort.tPos.padHeight;
 	local txt = g_i18n.modEnvironments[VehicleSort.ModName].texts.configHeadline;
 	setTextAlignment(VehicleSort.tPos.alignmentC);
-	setTextColor(unpack(VehicleSort.tColor.standard));
+	setTextColor(VehicleSort.tColor.standard:unpack());
 	renderText(VehicleSort.tPos.x, headingY, size + VehicleSort.tPos.sizeIncr, tostring(txt)); -- x, y, size, txt
 
 	setTextAlignment(VehicleSort.tPos.alignmentL);
 
-	--VehicleSort:dp(orderedConfig, 'drawConfig');
+	-- VehicleSort:dp(orderedConfig, 'drawConfig');
 	-- And now the rest of our config
 	for k, v in ipairs(VehicleSort.orderedConfig) do
 		local clr = VehicleSort.tColor.standard;
@@ -576,17 +581,17 @@ function VehicleSort:drawConfig()
 	end
 
 	VehicleSort.bgY = yPos;
-	VehicleSort.bgH = (y - yPos) + size + VehicleSort.tPos.yOffset + VehicleSort.tPos.padHeight;
+	VehicleSort.bgH = (y - yPos) + size + VehicleSort.tPos.sizeIncr + VehicleSort.tPos.padHeight;
 	if VehicleSort.bgY ~= nil and VehicleSort.bgW ~=nil and VehicleSort.bgH ~= nil then
 		VehicleSort:renderBg(VehicleSort.bgX, VehicleSort.bgY, VehicleSort.bgW, VehicleSort.bgH);
 	end;
 
 	setTextBold(false);
 	for k, v in ipairs(texts) do
-		setTextColor(unpack(v[4]))
+		setTextColor(v[4]:unpack())
 		renderText(v[1], v[2], v[3], tostring(v[5]));
 	end
-	setTextColor(unpack(VehicleSort.tColor.standard));
+	setTextColor(VehicleSort.tColor.standard:unpack());
 
 	--Show the last selected vehicle for info/image position & BG option
 	if VehicleSort:contains({17, 18, 19, 24, 25}, VehicleSort.selectedRealConfigIndex) then
@@ -607,7 +612,7 @@ function VehicleSort:drawList()
 		return false;
    end
 
-  VehicleSort:dp(vehList, 'drawList', 'vehList');
+  -- VehicleSort:dp(vehList, 'drawList', 'vehList');
 
 	local cnt = #VehicleSort.Sorted;
 	if cnt == 0 then
@@ -627,10 +632,10 @@ function VehicleSort:drawList()
 	VehicleSort.bgW = getTextWidth(size, txt) + VehicleSort.tPos.padSides;		--Background width will be dynamically adjusted later on. Just a value to get started with
 
 	-- We render the heading seperately to have it centered, despite the user config for the list
-	local headingY = VehicleSort.tPos.y + size + (VehicleSort.tPos.padHeight * 6);
+	local headingY = VehicleSort.tPos.y + size + (VehicleSort.tPos.padHeight * 3); --VehicleSort.tPos.y + size + (VehicleSort.tPos.padHeight * 6);
 
 	setTextAlignment(VehicleSort.tPos.alignmentC);
-	setTextColor(unpack(VehicleSort.tColor.standard));
+	setTextColor(VehicleSort.tColor.standard:unpack());
 	renderText(VehicleSort.tPos.x, headingY, size + VehicleSort.tPos.sizeIncr, tostring(txt)); -- x, y, size, txt
 
 	-- Now set the list alignment based on the config
@@ -661,8 +666,8 @@ function VehicleSort:drawList()
 	end
 
 	local colNum = 1;			--For multiple columns this counter gets increased
-	VehicleSort:dp(string.format('chk {%f} | check for chk {%f} | minY {%f}', chk, size + VehicleSort.tPos.spacing + VehicleSort.tPos.padHeight, minY));
-	VehicleSort:dp(string.format('minY {%s} - chk {%s} - chkColNum {%s}', minY, chk, chkColNum));
+	-- VehicleSort:dp(string.format('chk {%f} | check for chk {%f} | minY {%f}', chk, size + VehicleSort.tPos.spacing + VehicleSort.tPos.padHeight, minY));
+	-- VehicleSort:dp(string.format('minY {%s} - chk {%s} - chkColNum {%s}', minY, chk, chkColNum));
 
 	-- Calc our maxTxtW based on the expected number of columns.
 	--As we support just three columns we do the calc based on 3. In case we don't show a infobox we can add the space of one additional column
@@ -673,7 +678,7 @@ function VehicleSort:drawList()
 		maxTxtW = (VehicleSort.tPos.columnWidth - VehicleSort.tPos.padSides) * (3 / chkColNum) + VehicleSort.tPos.columnWidth;
 	end
 
-	VehicleSort:dp(string.format('columnWidth {%s} - maxTxtW {%s} - chkColNum {%s}', VehicleSort.tPos.columnWidth, maxTxtW, chkColNum));
+	-- VehicleSort:dp(string.format('columnWidth {%s} - maxTxtW {%s} - chkColNum {%s}', VehicleSort.tPos.columnWidth, maxTxtW, chkColNum));
 
 	for i = 1, cnt do
 		local realId = VehicleSort.Sorted[i];
@@ -737,7 +742,7 @@ function VehicleSort:drawList()
 	bgPosY = bgPosY - VehicleSort.tPos.spacing; -- bottom padding
 
 	VehicleSort.bgY = bgPosY;
-	VehicleSort.bgH = (y - bgPosY) + size + VehicleSort.tPos.sizeIncr + VehicleSort.tPos.yOffset + VehicleSort.tPos.spacing;
+	VehicleSort.bgH = (y - bgPosY) + size + VehicleSort.tPos.sizeIncr + VehicleSort.tPos.spacing;
 	VehicleSort.bgW = VehicleSort.bgW * colNum;
 	if VehicleSort.bgY ~= nil and VehicleSort.bgW ~=nil and VehicleSort.bgH ~= nil then
 		VehicleSort:renderBg(VehicleSort.bgX, VehicleSort.bgY, VehicleSort.bgW, VehicleSort.bgH);
@@ -767,20 +772,20 @@ function VehicleSort:drawList()
 		colX[1] = tPosXAligned;
 	end
 
-	VehicleSort:dp(colX, 'drawList');
+	-- VehicleSort:dp(colX, 'drawList');
 
 	for k, v in ipairs(texts) do
 		if type(v[4]) == 'boolean' then
 			setTextBold(v[4]);
 		end
-		setTextColor(unpack(v[5]));
+		setTextColor(v[5]:unpack());
 		local storColNum = v[1];
-		VehicleSort:dp(storColNum, 'drawList', 'storcolNum');
+		-- VehicleSort:dp(storColNum, 'drawList', 'storcolNum');
 		renderText(colX[storColNum], v[2], v[3], tostring(v[6])); -- x, y, size, txt
 	end
 
 	setTextBold(false);
-	setTextColor(unpack(VehicleSort.tColor.standard));
+	setTextColor(VehicleSort.tColor.standard:unpack());
 
 	if VehicleSort.config[15][2] then
 		VehicleSort:drawStoreImage(VehicleSort.Sorted[VehicleSort.selectedIndex]);
@@ -1220,13 +1225,13 @@ function VehicleSort:initVS()
 	VehicleSort.tPos = {};
 	VehicleSort.tPos.x = 0.5;
 	VehicleSort.tPos.center = 0.5;
-	VehicleSort.tPos.y = g_currentMission.hud.topNotification.y + g_currentMission.hud.topNotification.infoTextOffsetY;  -- y Position of Textfield, originally hardcoded 0.9
-	VehicleSort.tPos.yOffset = g_currentMission.hud.topNotification.infoTextOffsetY;  --* 1.5; -- y Position offset for headings, originally hardcoded 0.007
+	VehicleSort.tPos.y = g_currentMission.hud.topNotification.y - g_currentMission.hud.topNotification.titleTextOffsetY;  -- y Position of Textfield, originally hardcoded 0.9
+	VehicleSort.tPos.yOffset = g_currentMission.hud.topNotification.titleTextOffsetY;  --* 1.5; -- y Position offset for headings, originally hardcoded 0.007
 	VehicleSort.tPos.size = g_currentMission.hud.gameInfoDisplay.clockTextSize;  -- TextSize, originally hardcoded 0.018
 	VehicleSort.tPos.sizeBig = VehicleSort.tPos.size * 1.2;
 	VehicleSort.tPos.sizeSmall = VehicleSort.tPos.size * 0.6;
-	VehicleSort.tPos.sizeIncr = g_currentMission.hud.speedMeter.cruiseControlTextOffsetY; -- Text size increase for headings
-	VehicleSort.tPos.spacing = g_currentMission.hud.speedMeter.cruiseControlTextOffsetY;  -- Spacing between lines, originally hardcoded 0.005
+	VehicleSort.tPos.sizeIncr = 0.005; -- g_currentMission.hud.speedMeter.cruiseControlTextOffsetY; -- Text size increase for headings
+	VehicleSort.tPos.spacing = 0.005; -- g_currentMission.hud.speedMeter.cruiseControlTextOffsetY;  -- Spacing between lines, originally hardcoded 0.005
 	VehicleSort.tPos.padHeight = VehicleSort.tPos.spacing;
 	VehicleSort.tPos.padSides = VehicleSort.tPos.padHeight;
 	--VehicleSort.tPos.columnWidth = (((1 - VehicleSort.tPos.x) / 2) );
@@ -1580,7 +1585,7 @@ function VehicleSort:drawInfobox(realId)
 		local textTable = VehicleSort:getInfoTexts(realId);
 
 		setTextAlignment(VehicleSort.tPos.alignmentR);
-		setTextColor(unpack(VehicleSort.tColor.standard));
+		setTextColor(VehicleSort.tColor.standard:unpack());
 		local txtSize = VehicleSort.tPos.sizeSmall;
 		local imgWidth, _ = getNormalizedScreenValues(128,128);
 		if not VehicleSort.config[15][2] then				-- If there is no picture we can move more right

@@ -12,7 +12,7 @@ VehicleStatus.ModDirectory = g_modManager.nameToMod.FS25_VehicleExplorer.modDir
 VehicleStatus.Version = "1.0.0.0";
 
 
-VehicleStatus.debug = true; --fileExists(VehicleStatus.ModDirectory ..'debug');
+VehicleStatus.debug = fileExists(VehicleStatus.ModDirectory ..'debug');
 
 print(string.format('VehicleStatus v%s - DebugMode %s)', VehicleStatus.Version, tostring(VehicleStatus.debug)));
 
