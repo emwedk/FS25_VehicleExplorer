@@ -1,6 +1,6 @@
--- VehicleStatus.lua for FS22
--- Author: sperrgebiet
--- Please see https://github.com/sperrgebiet/FS22_VehicleExplorer for additional information, credits, issues and everything else
+-- VehicleStatus.lua for FS25
+-- Author: teknogeek
+-- Please see https://github.com/teknogeek/FS25_VehicleExplorer for additional information, credits, issues and everything else
 
 VehicleStatus = {};
 
@@ -9,7 +9,7 @@ VehicleStatus = {};
 --VehicleStatus.ModDirectory = g_currentModDirectory
 VehicleStatus.ModName = "FS25_VehicleExplorer";
 VehicleStatus.ModDirectory = g_modManager.nameToMod.FS25_VehicleExplorer.modDir
-VehicleStatus.Version = "1.0.0.1";
+VehicleStatus.Version = "1.0.0.2";
 
 
 VehicleStatus.debug = fileExists(VehicleStatus.ModDirectory ..'debug');

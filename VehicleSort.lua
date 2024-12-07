@@ -1,6 +1,6 @@
--- VehicleSort.lua for FS22
--- Author: sperrgebiet
--- Please see https://github.com/sperrgebiet/FS22_VehicleExplorer for additional information, credits, issues and everything else
+-- VehicleSort.lua for FS25
+-- Author: teknogeek
+-- Please see https://github.com/teknogeek/FS25_VehicleExplorer for additional information, credits, issues and everything else
 
 VehicleSort = {};
 VehicleSort.eventName = {};
@@ -10,7 +10,7 @@ VehicleSort.eventName = {};
 --VehicleSort.ModDirectory = g_currentModDirectory
 VehicleSort.ModName = "FS25_VehicleExplorer"
 VehicleSort.ModDirectory = g_modManager.nameToMod.FS25_VehicleExplorer.modDir
-VehicleSort.Version = "1.0.0.1;
+VehicleSort.Version = "1.0.0.2";
 
 
 VehicleSort.debug = fileExists(VehicleSort.ModDirectory ..'debug');
