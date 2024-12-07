@@ -9,6 +9,8 @@ Besides that it has a couple of additional functionality. See below.
 The original mod source code can be found at: https://github.com/sperrgebiet/FS22_VehicleExplorer
 
 ### Not ported/fixed yet
+* Tabbing will still take you to the train when not shown in the list
+* Sometimes the tab gets stuck on a new vehicle and needs to be re-ordered to fix
 * Porting Tardis to FS25 and integrating with it?
 
 ### Features
