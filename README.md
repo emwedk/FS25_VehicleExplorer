@@ -1,5 +1,5 @@
 # VehicleExplorer for FS25 aka VeEx25
-**This is an update of VehicleExplorer from FS22**
+**This is an update of VehicleExplorer from FS22 to FS25**
 
 **This update has not been thoroughly tested yet**
 
@@ -108,6 +108,6 @@ sperrgebiet for the FS22 Vehicle Explorer mod
 
 
 ## Latest Version
-1.0.0.2 - Hotfix
+1.0.1.0 - Add French translations
 
 ![screenshots/screenshot.png](screenshots/screenshot.png)
