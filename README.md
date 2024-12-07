@@ -106,6 +106,6 @@ sperrgebiet for the FS22 Vehicle Explorer mod
 
 
 ## Latest Version
-1.0.0.0 - Updated for FS25
+1.0.0.1 - Fix bugs in vehicle status display
 
 ![screenshots/screenshot.png](screenshots/screenshot.png)
