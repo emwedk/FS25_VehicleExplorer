@@ -886,10 +886,10 @@ function VehicleSort:getFillLevel(obj)
 	if obj.getFillUnits ~= nil then
 		for _, fillUnit in ipairs(obj:getFillUnits()) do
 			-- We don't want to take care of Diesel, Def or Air right now
-			if (fillUnit.fillType ~= 37) and (fillUnit.fillType ~= 38) and (fillUnit.fillType ~= 39) then
+			if (fillUnit.fillType ~= g_fillTypeManager.nameToFillType.DEF.index) and (fillUnit.fillType ~= g_fillTypeManager.nameToFillType.DIESEL.index) and (fillUnit.fillType ~= g_fillTypeManager.nameToFillType.AIR.index) then
 				fillLevel = fillUnit.fillLevel
 				cap = fillUnit.capacity
-				fillType = g_fillTypeManager.fillTypes[fillUnit.fillType]['title']
+				fillType = g_fillTypeManager.fillTypes[fillUnit.fillType].title
 			end
 
 			--DummyMod:dp(string.format('FillLevel - fillUnitID {%f} - fillLevel {%f} - capacity {%f} - fillType {%s}', fillUnit.fillUnitIndex, fillLevel, cap, fillType), 'getFillLevel');
