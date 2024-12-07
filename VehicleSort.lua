@@ -1,5 +1,5 @@
 -- VehicleSort.lua for FS25
--- Author: teknogeek
+-- Author: sperrgebiet, teknogeek
 -- Please see https://github.com/teknogeek/FS25_VehicleExplorer for additional information, credits, issues and everything else
 
 VehicleSort = {};
