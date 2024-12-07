@@ -204,7 +204,7 @@ function VehicleStatus:getSpeedStr(vehObj)
 end
 
 function VehicleStatus:RepairVehicleWithImplements(realId)
-	veh = g_currentMission.vehicles[realId];
+	veh = g_currentMission.vehicleSystem.vehicles[realId];
 	VehicleSort:dp(string.format('realId {%s} for configFileName {%s}', realId, veh.configFileName), 'VehicleStatus:RepairVehicleWithImplements');
 	if veh ~= nil then
 		if veh.repairVehicle ~= nil then
@@ -226,7 +226,7 @@ end
 
 
 function VehicleStatus:CleanVehicleWithImplements(realId)
-	veh = g_currentMission.vehicles[realId];
+	veh = g_currentMission.vehicleSystem.vehicles[realId];
 	VehicleSort:dp(string.format('realId {%s} for configFileName {%s}', realId, veh.configFileName), 'VehicleStatus:CleanVehicleWithImplements');
 	if veh ~= nil then
 		if veh.spec_washable ~= nil then
@@ -247,7 +247,7 @@ function VehicleStatus:CleanVehicleWithImplements(realId)
 end
 
 function VehicleStatus:RepaintVehicleWithImplements(realId)
-	veh = g_currentMission.vehicles[realId];
+	veh = g_currentMission.vehicleSystem.vehicles[realId];
 	VehicleSort:dp(string.format('realId {%s} for configFileName {%s}', realId, veh.configFileName), 'VehicleStatus:RepaintVehicleWithImplements');
 	if veh ~= nil then
 		if veh.repaintVehicle then
@@ -364,7 +364,7 @@ function VehicleStatus:setDirtOnObject(obj, dirt)
 end
 
 function VehicleStatus:getDieselLevel(realId)
-	local veh = g_currentMission.vehicles[realId];
+	local veh = g_currentMission.vehicleSystem.vehicles[realId];
 	if veh.getConsumerFillUnitIndex ~= nil and veh.getFillUnitFillLevel ~= nil then
 		local fuelFillType = veh:getConsumerFillUnitIndex(FillType.DIESEL);
 		local level = veh:getFillUnitFillLevel(fuelFillType);
@@ -381,7 +381,7 @@ function VehicleStatus:getDieselLevel(realId)
 end
 
 function VehicleStatus:getDefLevel(realId)
-	local veh = g_currentMission.vehicles[realId];
+	local veh = g_currentMission.vehicleSystem.vehicles[realId];
 	if veh.getConsumerFillUnitIndex ~= nil and veh.getFillUnitFillLevel ~= nil then
 		local fuelFillType = veh:getConsumerFillUnitIndex(FillType.DEF);
 		local level = veh:getFillUnitFillLevel(fuelFillType);
@@ -428,28 +428,20 @@ function VehicleStatus:getImplementStatus(realId)
 end
 
 function VehicleStatus:getFieldNumber(realId)
-	local veh = g_currentMission.vehicles[realId];
+	local veh = g_currentMission.vehicleSystem.vehicles[realId];
 
 	if veh.getIsOnField and veh:getIsOnField() then
-		--Took the majority of the getFieldNumber code from VehicleInspector by HappyLooser. Kudos to him/her
-		local veh_pos_x, veh_pos_y, veh_pos_z = getWorldTranslation(veh.components[1].node)
+		local veh_pos_x, _, veh_pos_z = getWorldTranslation(veh.components[1].node)
 
-		for fieldNum,fieldDef in ipairs(g_fieldManager.fields) do
-			for a=1, #fieldDef.getFieldStatusPartitions do
-				local b = fieldDef.getFieldStatusPartitions[a];
-				local x, z, wX, wZ, hX, hZ = b.x0, b.z0, b.widthX, b.widthZ, b.heightX, b.heightZ;
-				local distanceMax = math.max(wX, wZ, hX, hZ);
-				local distance = MathUtil.vector2Length(veh_pos_x - x, veh_pos_z - z);
-				if distance <= distanceMax then
-					--print("distance...".. tostring(distance).. " - maxDistance...".. tostring(distanceMax))
-					return fieldDef.fieldId;
-				end;
-			end;
-		end;
+		local farmland = g_farmlandManager:getFarmlandAtWorldPosition(veh_pos_x, veh_pos_z)
+		local field = farmland:getField()
 
-	else
-		return false;
+    if farmland and field then
+			return field:getId()
+    end
 	end
+
+	return false;
 end
 
 function VehicleStatus:getOperatingHours(obj)
