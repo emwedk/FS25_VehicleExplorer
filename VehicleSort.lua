@@ -1,5 +1,5 @@
 -- VehicleSort.lua for FS25
--- Author: teknogeek
+-- Author: sperrgebiet, teknogeek
 -- Please see https://github.com/teknogeek/FS25_VehicleExplorer for additional information, credits, issues and everything else
 
 VehicleSort = {};
@@ -1954,14 +1954,13 @@ function VehicleSort:tabVehicle(backwards)
 		VehicleSort:showNoVehicles();
 	end
 
+	nextId = 1;
 	local currrentVehicle = g_localPlayer:getCurrentVehicle();
 	if currrentVehicle == nil then
 		conId = nil;
-		nextId = 1;
 	else
 		conId = currrentVehicle.spec_vehicleSort.orderId;
-
-		VehicleSort:getNextInTabList(conId, backwards);
+		nextId = VehicleSort:getNextInTabList(conId, backwards);
 	end
 
 	VehicleSort:dp(string.format('conId {%s} - nextId {%d}', tostring(conId), nextId), 'tabVehicle');
@@ -1971,7 +1970,7 @@ function VehicleSort:tabVehicle(backwards)
 	if g_currentMission.vehicleSystem.vehicles[(VehicleSort.Sorted[nextId])] ~= nil then
 		while g_currentMission.vehicleSystem.vehicles[(VehicleSort.Sorted[nextId])]:getIsControlled() or VehicleSort:isParked(VehicleSort.Sorted[nextId]) do
 
-			VehicleSort:getNextInTabList(nextId, backwards)
+			nextId = VehicleSort:getNextInTabList(nextId, backwards);
 
 			if run == #VehicleSort.Sorted then
 				VehicleSort.showNoVehicles();
@@ -1987,13 +1986,13 @@ end
 
 function VehicleSort:getNextInTabList(orderId, backwards)
 	if backwards then
-		if orderId == 1 then
+		if orderId <= 1 then
 			nextId = #VehicleSort.Sorted;
 		else
 			nextId = orderId - 1;
 		end
 	else
-		if orderId == #VehicleSort.Sorted then
+		if orderId >= #VehicleSort.Sorted then
 			nextId = 1;
 		else
 			nextId = orderId + 1;
