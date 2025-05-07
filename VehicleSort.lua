@@ -98,7 +98,7 @@ VehicleSort.xmlAttrId = '#vsid';
 VehicleSort.xmlAttrOrder = '#vsorder';
 VehicleSort.xmlAttrParked = '#vsparked';
 VehicleSort.Sorted = {};
-VehicleSort.HiddenCount = 0;
+-- VehicleSort.HiddenCount = 0;
 --VehicleSort.dirtyState = false;						-- Used to check if we have to sync the order with g_currentMission.vehicles
 VehicleSort.orderedConfig = {};							-- It's just nicer to have the config list ordered
 
@@ -610,7 +610,7 @@ end
 function VehicleSort:drawList()
   VehicleSort.Sorted = VehicleSort:getOrderedVehicles();
 
-   if VehicleSort.HiddenCount == #VehicleSort.Sorted then
+   	if #VehicleSort.Sorted == 0 then
 		VehicleSort:showNoVehicles();
 		VehicleSort.showVehicles = false;
 		return false;
@@ -1023,7 +1023,6 @@ function VehicleSort:getOrderedVehicles()
 	local ordered = {};
 	local unordered = {};
 	local orderedToOrder = {};
-	VehicleSort.HiddenCount = 0;
 	local vehList = VehicleSort:getVehicles();
 
 	-- We don't want to do everything all the time, unless we know that something has changed, like after a vehicle got deleted
@@ -1037,15 +1036,12 @@ function VehicleSort:getOrderedVehicles()
 	--VehicleSort:dp("Sorted list seems outdated. So doing the ordering again.", "getOrderedVehicles");
 
 	for _, veh in pairs(vehList) do
-		if veh.spec_vehicleSort.orderId ~= nil then
-			table.insert(orderedToOrder, {orderId=veh.spec_vehicleSort.orderId, realId=veh.spec_vehicleSort.realId} );
-		else
-			table.insert(unordered, veh.spec_vehicleSort.realId);
-		end
-
-		-- Keep track of hidden items, so that we're not showing an empty list
-		if VehicleSort:isHidden(veh.spec_vehicleSort.realId) then
-			VehicleSort.HiddenCount = VehicleSort.HiddenCount + 1;
+		if not VehicleSort:isHidden(veh.spec_vehicleSort.realId) then
+			if veh.spec_vehicleSort.orderId ~= nil then
+				table.insert(orderedToOrder, {orderId=veh.spec_vehicleSort.orderId, realId=veh.spec_vehicleSort.realId} );
+			else
+				table.insert(unordered, veh.spec_vehicleSort.realId);
+			end
 		end
 	end
 
