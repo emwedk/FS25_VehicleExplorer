@@ -1968,7 +1968,7 @@ function VehicleSort:tabVehicle(backwards)
 
 	-- We need the loop to check which vehicle we can actually enter
 	local run = 1;
-	if g_currentMission.vehicleSystem.vehicles[(VehicleSort.Sorted[nextId])] ~= nil and g_currentMission.vehicleSystem.vehicles[(VehicleSort.Sorted[nextId])].getIsControlled then
+	if g_currentMission.vehicleSystem.vehicles[(VehicleSort.Sorted[nextId])] ~= nil then
 		while g_currentMission.vehicleSystem.vehicles[(VehicleSort.Sorted[nextId])]:getIsControlled() or VehicleSort:isParked(VehicleSort.Sorted[nextId]) do
 
 			VehicleSort:getNextInTabList(nextId, backwards)
