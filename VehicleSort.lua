@@ -85,7 +85,7 @@ VehicleSort.tColor.autodrive 	= Color.fromRGBA(8, 199, 217, 255); 	-- aqua/turqu
 VehicleSort.tColor.aive 			= Color.PRESETS.ORANGE; 	-- orange
 VehicleSort.tColor.self 			= Color.PRESETS.GREEN; -- green
 
-VehicleSort.tColor.motorOn 		= Color.fromRGBA(237, 194, 6, 255); -- yellow
+VehicleSort.tColor.motorOn 		= Color.fromRGBA(239, 229, 132, 255); -- light yellow
 
 VehicleSort.keyCon = 'VeExConfig';
 VehicleSort.selectedConfigIndex = 1;
