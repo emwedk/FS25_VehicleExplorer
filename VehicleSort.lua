@@ -1513,7 +1513,7 @@ function VehicleSort:saveConfig()
 end
 
 function VehicleSort:drawStoreImage(realId)
-	if g_currentMission.vehicleSystem.vehicles[realId] ~= nil and not VehicleSort:isTrain(realId) then
+	if g_currentMission.vehicleSystem.vehicles[realId] ~= nil then
 		local imgFileName = VehicleSort:getStoreImageByConf(g_currentMission.vehicleSystem.vehicles[realId]['configFileName']);
 		--VehicleSort:dp(string.format('configFileName {%s}', configFileName));
 		--VehicleSort:dp(storeItem, 'drawStoreImage');
@@ -1535,7 +1535,8 @@ function VehicleSort:drawStoreImage(realId)
 				-- Must be rendered after the background, otherwise it's covered by it
 				renderOverlay(storeImage, imgX, imgY, storeImgX, storeImgY)
 
-				if (VehicleSort:getVehImplements(realId) ~= nil) and (imgFileName ~= "data/store/store_empty.png") then
+				-- Don't render implements for trains
+				if not VehicleSort:isTrain(realId) and (VehicleSort:getVehImplements(realId) ~= nil) and (imgFileName ~= "data/store/store_empty.png") then
 					local impList = VehicleSort:getVehImplements(realId);
 					for i = 1, VehicleSort.config[24][2] do			-- Limit to the configured amount of implements to show
 						local imp = impList[i];
@@ -1569,10 +1570,10 @@ function VehicleSort:getStoreImageByConf(confFile)
 	if storeItem ~= nil then
 		local imgFileName = storeItem.imageFilename;
 		--if imgFileName == 'data/vehicles/train/locomotive01/store_locomotive01.png' or imgFileName == 'data/vehicles/train/locomotive04/store_locomotive04.png' then
-		if string.find(imgFileName, 'locomotive') then
+		-- if string.find(imgFileName, 'locomotive') then
 			--imgFileName = Utils.getFilename('img/train.png', VehicleSort.ModDirectory);
-			imgFileName = "data/store/store_empty.png";
-		end
+			-- imgFileName = "data/store/store_empty.png";
+		-- end
 		return imgFileName;
 	end
 end
