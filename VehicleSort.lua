@@ -1944,8 +1944,9 @@ function VehicleSort:tabVehicle(backwards)
 	-- performance impact. If so, I'll just drop it again and define it as 'by design'. Opening/closing the vehList shouldn't be a big deal
 	-- especially as it's just an issue when new vehicles get bought/sold
 	--if #VehicleSort.Sorted == 0 then
-	if #VehicleSort.Sorted == 0 or #VehicleSort.Sorted ~= #VehicleSort:getOrderedVehicles() then
-		VehicleSort.Sorted = VehicleSort:getOrderedVehicles();
+	local sorted = VehicleSort:getOrderedVehicles();
+	if #VehicleSort.Sorted == 0 or #VehicleSort.Sorted ~= #sorted then
+		VehicleSort.Sorted = sorted;
 	end
 
 	-- Show the warning in case we've still no vehicles
@@ -1953,11 +1954,12 @@ function VehicleSort:tabVehicle(backwards)
 		VehicleSort:showNoVehicles();
 	end
 
-	if g_localPlayer:getCurrentVehicle() == nil then
+	local currrentVehicle = g_localPlayer:getCurrentVehicle();
+	if currrentVehicle == nil then
 		conId = nil;
 		nextId = 1;
 	else
-		conId = g_localPlayer:getCurrentVehicle().spec_vehicleSort.orderId
+		conId = currrentVehicle.spec_vehicleSort.orderId;
 
 		VehicleSort:getNextInTabList(conId, backwards);
 	end
