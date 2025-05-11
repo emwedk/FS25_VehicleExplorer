@@ -860,7 +860,7 @@ function VehicleSort:getAttachmentName(implement)
 		end
 	end
 	
-	if VehicleSort.config[32][2] then -- show attachment type or model name
+	if VehicleSort.config[32][2] and not implement.customEnvironment then -- show attachment type if not a mod or model name
 		name = name .. string.format('%s', VehicleSort:getVehicleType(implement))
 	else
 		name = name .. string.format('%s', implement:getName())
