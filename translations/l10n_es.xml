@@ -24,8 +24,11 @@
 		<text name="showBrand"								text="Mostrar Marca en lista de vehículos" />
 		<text name="showHorsepower"							text="Mostrar potencia" />
 		<text name="showNames"								text="Mostrar nombres de jugadores en lista de vehículos" />
+		<text name="showLicense" 							text="Mostrar matrículas en la lista" />
+		<text name="showImplementLicense" 					text="Mostrar matrículas para implementos" />
 		<text name="showFillLevels"							text="Mostrar nivel de llenado en lista de vehículos" />
 		<text name="showPercentages"						text="Mostrar nivel de llenado en %" />
+		<text name="combinedFillLevels" 					text="Mostrar niveles de llenado combinados" />
 		<text name="showEmpty"								text="Mostrar capacidad de vehículos vacíos" />
 		<text name="showHelp"								text="Mostrar tecla de entrada (incl. Tardis)" />
 		<text name="bgTrans"								text="Fondo transparente" />
@@ -33,6 +36,7 @@
 		<text name="showSteerableImplements"				text="Mostrar herramientas conducibles" />
 		<text name="showImplements"							text="Mostrar herramientas enganchables in lista" />
 		<text name="showImplementsMax"						text="Número de implementos mostrados en la lista" />
+		<text name="showImplementsType"						text="Mostrar el tipo de implemento en lugar del modelo" />
 		<text name="saveStatus"								text="Guardar estado vehículo" />
 		<text name="showImg"								text="Mostrar imagenes" />
 		<text name="showInfo"								text="Mostrar caja de información" />

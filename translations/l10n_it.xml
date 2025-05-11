@@ -24,8 +24,11 @@
 		<text name="showBrand"								text="Mostra il nome del marchio nell'elenco dei veicoli" />
 		<text name="showHorsepower"							text="Mostra la potenza del motore (HP/CV)" />
 		<text name="showNames"								text="Visualizza i nomi dei giocatori nell'elenco dei veicoli" />
+		<text name="showLicense" 							text="Mostra le targhe nell'elenco" />
+		<text name="showImplementLicense" 					text="Mostra targhe per i dispositivi connessi" />
 		<text name="showFillLevels"							text="Mostra il livello di riempimento nell'elenco dei veicoli" />
 		<text name="showPercentages"						text="Visualizzazione del livello di riempimento in percentuale" />
+		<text name="combinedFillLevels" 					text="Mostra livelli di riempimento combinati" />
 		<text name="showEmpty"								text="Mostra l'indicatore del livello di riempimento per i veicoli vuoti" />
 		<text name="showHelp"								text="Mostra assegnazione tasti (incluso Tardis se disponibile)" />
 		<text name="bgTrans"								text="Trasparenza alfa dello sfondo" />
@@ -33,6 +36,7 @@
 		<text name="showSteerableImplements"				text="Mostra strumenti guidabili" />
 		<text name="showImplements"							text="Mostra i dispositivi collegati nell'elenco" />
 		<text name="showImplementsMax"						text="Numero di dispositivi collegati nell'elenco" />
+		<text name="showImplementsType"						text="Mostra il tipo di strumento invece del modello" />
 		<text name="saveStatus"								text="Salva lo stato del veicolo" />
 		<text name="showImg"								text="Mostra le immagini" />
 		<text name="showInfo"								text="Mostra riquadro informazioni" />

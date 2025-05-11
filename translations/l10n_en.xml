@@ -24,8 +24,11 @@
 		<text name="showBrand"								text="Show brand name in vehicle list" />
 		<text name="showHorsepower"							text="Show horse power" />
 		<text name="showNames"								text="Show names of players in vehicle list" />
+		<text name="showLicense"							text="Show license plates in vehicle list" />
+		<text name="showImplementLicense"					text="Show license plates for implements" />
 		<text name="showFillLevels"							text="Show fill level in vehicle list" />
 		<text name="showPercentages"						text="Show fill level as percentage" />
+		<text name="combinedFillLevels" 					text="Show combined fill levels" />
 		<text name="showEmpty"								text="Show fill level of empty vehicles" />
 		<text name="showHelp"								text="Show input binding (incl. Tardis if available)" />
 		<text name="bgTrans"								text="Background alpha transparency" />
@@ -33,6 +36,7 @@
 		<text name="showSteerableImplements"				text="Show steerable implements" />
 		<text name="showImplements"							text="Show attached implements in list" />
 		<text name="showImplementsMax"						text="Number of implements in list" />
+		<text name="showImplementsType"						text="Show implement type instead of model" />
 		<text name="saveStatus"								text="Save vehicle status" />
 		<text name="showImg"								text="Show images" />
 		<text name="showInfo"								text="Show infobox" />

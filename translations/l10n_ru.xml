@@ -24,8 +24,11 @@
 		<text name="showBrand"								text="Отображать бренд техники в списке" />
 		<text name="showHorsepower"							text="Отображать мощность" />
 		<text name="showNames"								text="Отображать имя игрока в списке" />
+		<text name="showLicense" 							text="Отобразить номерные знаки в списке" />
+		<text name="showImplementLicense" 					text="Отображение номерных знаков подключенного оборудования" />
 		<text name="showFillLevels"							text="Отображать уровень заполнения в списке" />
 		<text name="showPercentages"						text="Отображать уровень заполнения в %" />
+		<text name="combinedFillLevels" 					text="Показать объединённые уровни заполнения" />
 		<text name="showEmpty"								text="Отображать уровень заполнения в пустой технике" />
 		<text name="showHelp"								text="Показывать сочетание клавиш (включая Tardis, если установлен)" />
 		<text name="bgTrans"								text="Прозрачность подложки окна настроек" />
@@ -33,6 +36,7 @@
 		<text name="showSteerableImplements"				text="Отображать управляемую технику" />
 		<text name="showImplements"							text="Отображать в списке присоеденённое оборудование" />
 		<text name="showImplementsMax"						text="К-во присоеденённых оборудований в списке" />
+		<text name="showImplementsType"						text="Показывать тип орудия вместо модели" />
 		<text name="saveStatus"								text="Сохранять состояние техники после перезагрузки" />
 		<text name="showImg"								text="Отображать изображения" />
 		<text name="showInfo"								text="Отображать infobox" />
