@@ -36,37 +36,41 @@ VehicleSort.loadTrainStatus = {};
 VehicleSort.loadTrainStatus.entries = 0;
 VehicleSort.loadItemsEnterable = {};
 
-VehicleSort.config = {											--Id		-Order in configMenu
-  {'showTrain', true, 1},										-- 1		1
-  {'showCrane', false, 2},                             			-- 2		2
-  {'showBrand', false, 3},                             			-- 3		3
-  {'showHorsepower', true, 4},                         			-- 4		4
-  {'showNames', true, 8},                              			-- 5		8
-  {'showFillLevels', true, 5},                         			-- 6		5
-  {'showPercentages', true, 6},                        			-- 7		6
-  {'showEmpty', false, 7},                             			-- 8		7
-  {'txtSize', VehicleSort.txtSizeDef, 16},             			-- 9		16
-  {'bgTrans', VehicleSort.bgTransDef, 17},              		-- 10		17
-  {'showSteerableImplements', true, 11},                		-- 11		11
-  {'showImplements', true, 9},	                         		-- 12		9
-  {'showHelp', true, 28},                               		-- 13		28
-  {'saveStatus', true, 25},                             		-- 14		25
-  {'showImg', true, 12},                                		-- 15		12
-  {'showInfo', true, 14},                               		-- 16		14
-  {'infoStart', VehicleSort.infoYStart, 21},            		-- 17		21
-  {'infoBg', true, 18},                                 		-- 18		18
-  {'imageBg', true, 20},                                		-- 19		20
-  {'listAlignment', VehicleSort.listAlignment, 22},     		-- 20		22
-  {'cleanOnRepair', true, 23},                          		-- 21		23
-  {'integrateTardis', true, 26},                        		-- 22		26
-  {'enterVehonTeleport', true, 27},                     		-- 23		27
-  {'showImgMaxImp', VehicleSort.showImgMaxImp, 13},     		-- 24		13
-  {'showInfoMaxImpl', VehicleSort.showInfoMaxImpl, 15},			-- 25		15
-  {'showImplementsMax', VehicleSort.showImplementsMax, 10},		-- 26		10
-  {'useTwoColoredList', true, 19},								-- 27		19
-  {'useVeExTabOrder', true, 29},								-- 28		29
-  {'paintonRepair', true, 24},									-- 29		24
-};
+VehicleSort.config = {                                                        --Id
+    {'showTrain',                true,                            1   },      -- 1
+    {'showCrane',                false,                           2   },      -- 2
+    {'showBrand',                false,                           3   },      -- 3
+    {'showHorsepower',           true,                            4   },      -- 4
+    {'showNames',                true,                            8   },      -- 5
+    {'showFillLevels',           true,                            5   },      -- 6
+    {'showPercentages',          true,                            6   },      -- 7
+    {'showEmpty',                false,                           8   },      -- 8
+    {'txtSize',                  VehicleSort.txtSizeDef,          19  },      -- 9
+    {'bgTrans',                  VehicleSort.bgTransDef,          20  },      -- 10
+    {'showSteerableImplements',  true,                            15  },      -- 11
+    {'showImplements',           true,                            11  },      -- 12
+    {'showHelp',                 true,                            32  },      -- 13
+    {'saveStatus',               true,                            29  },      -- 14
+    {'showImg',                  true,                            16  },      -- 15
+    {'showInfo',                 true,                            18  },      -- 16
+    {'infoStart',                VehicleSort.infoYStart,          25  },      -- 17
+    {'infoBg',                   true,                            22  },      -- 18
+    {'imageBg',                  true,                            24  },      -- 19
+    {'listAlignment',            VehicleSort.listAlignment,       26  },      -- 20
+    {'cleanOnRepair',            true,                            27  },      -- 21
+    {'integrateTardis',          true,                            30  },      -- 22
+    {'enterVehonTeleport',       true,                            31  },      -- 23
+    {'showImgMaxImp',            VehicleSort.showImgMaxImp,       17  },      -- 24
+    {'showInfoMaxImpl',          VehicleSort.showInfoMaxImpl,     19  },      -- 25
+    {'showImplementsMax',        VehicleSort.showImplementsMax,   14  },      -- 26
+    {'useTwoColoredList',        true,                            23  },      -- 27
+    {'useVeExTabOrder',          true,                            33  },      -- 28
+    {'paintonRepair',            true,                            28  },      -- 29
+    {'showLicense',              true,                            10  },      -- 30
+    {'showImplementLicense',     true,                            12  },      -- 31
+    {'showImplementsType',       true,                            13  },      -- 32
+    {'combinedFillLevels',       true,                            7   },      -- 33
+}
 
 VehicleSort.tColor = {}; -- text colours
 VehicleSort.tColor.isParked 	= Color.PRESETS.GRAY;   -- grey
@@ -526,6 +530,7 @@ end
 -- VehicleSort specific functions
 --
 function VehicleSort:calcPercentage(curVal, maxVal)
+	if curVal == 0 and maxVal == 0 then return 0 end
 	local per = curVal / maxVal * 100;
 	return (math.floor(per * 10)/10);
 end
@@ -823,200 +828,273 @@ function VehicleSort:getVehicles()
 end
 
 function VehicleSort:getVehImplements(realId)
-	if g_currentMission.vehicleSystem.vehicles[realId].getAttachedImplements ~= nil then
-		if #g_currentMission.vehicleSystem.vehicles[realId]:getAttachedImplements() > 0 then
-			local allImp = {}
-			-- Credits to Tardis from FS17
-			local function addAllAttached(obj)
-				if obj.getAttachedImplements ~= nil then
-					for _, imp in pairs(obj:getAttachedImplements()) do
-						addAllAttached(imp.object);
-						table.insert(allImp, imp);
-					end
-				end
+	local allImp = {}
+	local function addAllAttached(obj)
+		if obj.getAttachedImplements ~= nil then
+			for _, imp in pairs(obj:getAttachedImplements()) do
+				addAllAttached(imp.object)
+				table.insert(allImp, imp)
 			end
-
-            addAllAttached(g_currentMission.vehicleSystem.vehicles[realId]);
-			return allImp;
-		else
-			return nil;
 		end
-	else
-		return nil;
+	end
+
+	addAllAttached(g_currentMission.vehicleSystem.vehicles[realId])
+	if #allImp > 0 then
+		return allImp
 	end
 end
 
 -- We can't use getFullName for Attachments as that's causing lua callstacks once CP or a helper is used
 -- Hence we build our own full name with the help of the store & brand manager
-function VehicleSort:getAttachmentName(obj)
-	local val = '';
-	if VehicleSort.config[3][2] then
-		local brand = VehicleSort:getAttachmentBrand(obj);
+function VehicleSort:getAttachmentName(implement)
+	local name = ''
+
+	if VehicleSort.config[31][2] then -- show licensePlate for attachments
+		local plate = VehicleSort:getPlateByVehicle(implement)
+		if plate ~= nil and plate ~= '' then
+			name = name .. string.format('[ %s ] ', plate)
+		end
+	end
+
+	if VehicleSort.config[3][2] then -- show brand name
+		local brand = VehicleSort:getBrandByVehicle(implement)
 		if brand ~= nil then
-			val = val .. string.format('%s %s', brand, obj:getName());
-		else
-			val = val .. string.format('%s ', obj:getName());
+			name = name .. string.format('%s ', brand)
 		end
+	end
+	
+	if VehicleSort.config[32][2] then -- show attachment type or model name
+		name = name .. string.format('%s', VehicleSort:getVehicleType(implement))
 	else
-		val = val .. string.format('%s', obj:getName());
+		name = name .. string.format('%s', implement:getName())
 	end
-	--VehicleSort:dp(string.format('val = {%s}', val), getAttachmentName);
-	return val;
+
+	--VehicleSort:dp(string.format('name = {%s}', name), getAttachmentName)
+	return name
 end
 
--- Not using :getFullName, as it will throw lua call stacks for not getting the helper name when using CP
-function VehicleSort:getAttachmentBrand(obj)
-    local storeItem = g_storeManager:getItemByXMLFilename(obj.configFileName);
-    if storeItem ~= nil then
-        local brand = g_brandManager:getBrandByIndex(storeItem.brandIndex);
-        if brand ~= nil then
-            return brand.title;
-		else
-			return 'Lizard';
-        end
-    end
+function VehicleSort:getVehicleType(vehicle)
+	return vehicle.typeName:gsub("^%l", string.upper, 1)
 end
 
-function VehicleSort:getFillLevel(obj)
+function VehicleSort:getFillLevel(vehicle, detailed)
+    local fillLevel, capacity, fillType = 0, 0, ""
+    if not vehicle.getFillUnits then return fillLevel, capacity, fillType end
 
-	local fillLevel = 0;
-	local cap = 0;
-	local fillType = "";
+	local consumers = { FillType.DIESEL, FillType.ELECTRICCHARGE, FillType.METHANE } -- consumers to be displayed in detailed mode
 
-	if obj.getFillUnits ~= nil then
-		for _, fillUnit in ipairs(obj:getFillUnits()) do
-			-- We don't want to take care of Diesel, Def or Air right now
-			if (fillUnit.fillType ~= g_fillTypeManager.nameToFillType.DEF.index) and (fillUnit.fillType ~= g_fillTypeManager.nameToFillType.DIESEL.index) and (fillUnit.fillType ~= g_fillTypeManager.nameToFillType.AIR.index) then
-				fillLevel = fillUnit.fillLevel
-				cap = fillUnit.capacity
-				fillType = g_fillTypeManager.fillTypes[fillUnit.fillType].title
-			end
+	-- get fill levels for the relevant fillUnits
+	for _, fillUnit in pairs(vehicle:getFillUnits()) do
+		if fillUnit.showOnHud or (detailed and vehicle.spec_motorized and VehicleSort:contains(consumers, fillUnit.fillType)) then
+			fillLevel = fillLevel + (fillUnit.fillLevelToDisplay ~= nil and fillUnit.fillLevelToDisplay or (fillUnit.fillLevel or 0))
+			capacity = capacity + (fillUnit.capacity or 0)
+			
+			local fillTypeIndex =
+				(fillType == FillType.UNKNOWN and #fillUnit.supportedFillTypes == 1 and next(fillUnit.supportedFillTypes)) or
+				(fillUnit.fillType ~= FillType.UNKNOWN and fillUnit.fillType) or
+				nil
+			
+			local newType = fillTypeIndex and g_fillTypeManager.fillTypes[fillTypeIndex].title or ''
 
-			--DummyMod:dp(string.format('FillLevel - fillUnitID {%f} - fillLevel {%f} - capacity {%f} - fillType {%s}', fillUnit.fillUnitIndex, fillLevel, cap, fillType), 'getFillLevel');
+			fillType = (fillType == '' and newType)
+				or (newType ~= "" and newType ~= fillType and "Mixed")
+				or fillType
 		end
 	end
 
-	--VehicleSort:dp(string.format('FillLevel fillLevel {%f} - capacity {%f}', fillLevel, cap), 'getFillLevel');
-	--VehicleSort:dp(string.format('fillType {%s} - fillTypeIndex {%s} - filltypeTitle {%s}', fillLevelVehicle.fillType, fillTypeIndex, fillType));
-
-	return fillLevel, cap, fillType
+    return fillLevel, capacity, fillType
 end
 
-function VehicleSort:getFillDisplay(obj, infoBox)
-	local ret = '';
-	if VehicleSort.config[6][2] or infoBox then -- Fill-Level-Display active?
-		local f, c, t = VehicleSort:getFillLevel(obj);
+function VehicleSort:getFillDisplay(vehicle, detailed)
+	local ret = ''
+	if VehicleSort.config[6][2] or detailed then -- Fill-Level-Display active?
+		local f, c, t = VehicleSort:getFillLevel(vehicle, detailed)
 
-		if not infoBox then t = ""; end;	-- we use the same method for the list and the infobox. But the fillType should just be visible in the infobox
+		if not detailed then t = "" end	-- we use the same method for the list and the infobox. But the fillType should just be visible in the infobox
 
 		if VehicleSort.config[8][2] or f > 0 then -- Empty should be shown or is not empty
 			if c > 0 then -- Capacity more than zero
-				if infoBox then  -- show more details in the infobox
-					ret = string.format('%d/%d (%d %%) %s', math.floor(f), c, VehicleSort:calcPercentage(f, c), t);
+				if detailed then  -- show more details in the infobox
+					ret = string.format('%d/%d (%d %%) %s', math.floor(f), c, VehicleSort:calcPercentage(f, c), t)
 				elseif VehicleSort.config[7][2] then -- Display as percentage
-					ret = string.format(' (%d %%) %s', VehicleSort:calcPercentage(f, c), t);
+					ret = string.format(' (%d %%) %s', VehicleSort:calcPercentage(f, c), t)
 				else -- Display as amount of total capacity
-					ret = string.format(' (%d/%d) %s', math.floor(f), c, t);
+					ret = string.format(' (%d/%d) %s', math.floor(f), c, t)
 				end
 			end
 		end
 	end
 
-	return ret;
+	return ret
+end
+
+function VehicleSort:reduceFills(fills)
+	if not VehicleSort.config[6][2] then return '' end -- Fill-Level-Display active?
+
+    local fill = {0, 0}
+    for _, f in pairs(fills) do
+        fill[1] = fill[1] + f[1]
+        fill[2] = fill[2] + f[2]
+    end
+    local f, c = table.unpack(fill)
+
+	-- if showEmpty is false or capacity is 0, we don't want to show empty fills
+	if (not VehicleSort.config[8][2] and f <= 0) or (c <= 0) then return '' end
+
+	-- if showPercentages is true, show as percentage else show as units
+	return VehicleSort.config[7][2] and string.format(' (%d %%)', VehicleSort:calcPercentage(f, c)) or string.format(' (%d/%d)', math.floor(f), c)
 end
 
 function VehicleSort:getFullVehicleName(realId)
-	local nam = '';
-	local ret = {};
-	local tmpString = '(%s) ';
+	local name = ''
+	local ret = {}
+	local tmpString = '( %s ) '
 
 	if VehicleSort:isParked(realId) then
-		nam = '[P] '; -- Prefix for parked (not part of tab list) vehicles
+		name = '[ P ] '; -- Prefix for parked (not part of tab list) vehicles
 	end
 	if g_currentMission.vehicleSystem.vehicles[realId] ~= nil and VehicleSort:getIsCourseplay(g_currentMission.vehicleSystem.vehicles[realId]) then -- CoursePlay
-		nam = nam .. string.format(tmpString, g_i18n.modEnvironments[VehicleSort.ModName].texts.courseplay);
+		name = name .. string.format(tmpString, g_i18n.modEnvironments[VehicleSort.ModName].texts.courseplay)
 	elseif (g_currentMission.vehicleSystem.vehicles[realId].getIsFollowMeActive and g_currentMission.vehicleSystem.vehicles[realId]:getIsFollowMeActive()) then	--FollowMe
-		nam = nam .. string.format(tmpString, g_i18n.modEnvironments[VehicleSort.ModName].texts.followme);
+		name = name .. string.format(tmpString, g_i18n.modEnvironments[VehicleSort.ModName].texts.followme)
 	elseif (g_currentMission.vehicleSystem.vehicles[realId].ad ~= nil and g_currentMission.vehicleSystem.vehicles[realId].ad.stateModule ~= nil and g_currentMission.vehicleSystem.vehicles[realId].ad.stateModule.active) then	--AutoDrive
-		nam = nam .. string.format(tmpString, g_i18n.modEnvironments[VehicleSort.ModName].texts.autodrive);
+		name = name .. string.format(tmpString, g_i18n.modEnvironments[VehicleSort.ModName].texts.autodrive)
 	elseif g_currentMission.vehicleSystem.vehicles[realId].aiveIsStarted then
-		nam = nam .. string.format(tmpString, g_i18n.modEnvironments[VehicleSort.ModName].texts.aive);
+		name = name .. string.format(tmpString, g_i18n.modEnvironments[VehicleSort.ModName].texts.aive)
 	elseif VehicleSort:isHired(realId) then
-		nam = nam .. string.format(tmpString, g_i18n.modEnvironments[VehicleSort.ModName].texts.hired);
+		name = name .. string.format(tmpString, g_i18n.modEnvironments[VehicleSort.ModName].texts.hired)
 	elseif VehicleSort:isControlled(realId) then
-		local con = VehicleSort:getControllerName(realId);
+		local con = VehicleSort:getControllerName(realId)
 		if VehicleSort.config[5][2] and con ~= nil and con ~= 'Unknown' and con ~= '' then
-			nam = nam .. string.format(tmpString, con);
+			name = name .. string.format(tmpString, con)
+		end
+	end
+
+    -- add licenseplate in front of the name
+	if VehicleSort.config[30][2] then
+		local plate = VehicleSort:getPlate(realId)
+		if plate and plate ~= '' then
+			name = name .. string.format('[ %s ] ', plate)
 		end
 	end
 
 	if VehicleSort:isTrain(realId) then
-		nam = nam .. VehicleSort:getName(realId, string.format('%s', g_i18n.modEnvironments[VehicleSort.ModName].texts.vs_train));
+		name = name .. VehicleSort:getName(realId, string.format('%s', g_i18n.modEnvironments[VehicleSort.ModName].texts.vs_train))
 	elseif VehicleSort:isCrane(realId) then
-		nam = nam .. VehicleSort:getName(realId, string.format('%s', g_i18n.modEnvironments[VehicleSort.ModName].texts.vs_crane));
+		name = name .. VehicleSort:getName(realId, string.format('%s', g_i18n.modEnvironments[VehicleSort.ModName].texts.vs_crane))
 	elseif VehicleSort.config[3][2] then -- Show brand
-		nam = nam .. string.format('%s %s', VehicleSort:getBrandName(realId), VehicleSort:getName(realId));
+		name = name .. string.format('%s %s', VehicleSort:getBrandName(realId), VehicleSort:getName(realId))
 	else
-	  --VehicleSort:dp(veh.spec_vehicleSort, 'getFullVehicleName', 'Table spec_vehicleSort');
-	  nam = nam .. string.format('%s', VehicleSort:getName(realId));
+	  --VehicleSort:dp(veh.spec_vehicleSort, 'getFullVehicleName', 'Table spec_vehicleSort')
+	  name = name .. string.format('%s', VehicleSort:getName(realId))
 	end
 
-	-- Show horse power
+	-- show horse power
 	if VehicleSort.config[4][2] then
-		local horsePower = VehicleSort:getHorsePower(realId);
-		if horsePower ~= nil then
-			nam = nam .. " (" .. horsePower .. string.format(' %s)', g_i18n.modEnvironments[VehicleSort.ModName].texts.horsePower);
+		local horsePower = VehicleSort:getHorsePower(realId)
+		if horsePower then
+			name = name .. string.format(' | %s %s', horsePower, g_i18n.modEnvironments[VehicleSort.ModName].texts.horsePower)
 		end
 	end
 
-	table.insert(ret, nam .. VehicleSort:getFillDisplay(g_currentMission.vehicleSystem.vehicles[realId]));
+	local fill = VehicleSort.config[33][2] and {{ VehicleSort:getFillLevel(g_currentMission.vehicleSystem.vehicles[realId]) }} or VehicleSort:getFillDisplay(g_currentMission.vehicleSystem.vehicles[realId])
 
-	if VehicleSort:getVehImplements(realId) ~= nil and VehicleSort.config[12][2] then
-		local implements = VehicleSort:getVehImplements(realId);
+	local implementStrings = {}
 
-		local maxCount = VehicleSort.config[26][2];
+	local implements = VehicleSort:getVehImplements(realId)
+	if implements ~= nil and VehicleSort.config[12][2] then
+		local maxCount = VehicleSort.config[26][2]
 		if #implements < maxCount then
-			maxCount = #implements;
+			maxCount = #implements
 		end
 
-		local linkWord = string.format(' %s', g_i18n.modEnvironments[VehicleSort.ModName].texts.with);
+		--local linkWord = string.format(' %s', g_i18n.modEnvironments[VehicleSort.ModName].texts.with)
+		local linkWord = "→"
 		for i=1, maxCount do
-			local imp = implements[i];
+			local imp = implements[i]
 			if (imp ~= nil and imp.object ~= nil) then
-				if i > 1 then
-					linkWord = "&";
+				-- if i > 1 then
+				-- 	linkWord = "&"
+				-- end
+
+				local tempFill = ''
+				if VehicleSort.config[33][2] then
+					table.insert(fill, { VehicleSort:getFillLevel(imp.object) })
+				else
+					tempFill = VehicleSort:getFillDisplay(imp.object)
 				end
-				table.insert(ret, string.format('%s %s%s ', linkWord, VehicleSort:getAttachmentName(imp.object), VehicleSort:getFillDisplay(imp.object)));
+
+				table.insert(implementStrings, string.format(' %s %s%s', linkWord, VehicleSort:getAttachmentName(imp.object), tempFill))
 			end
 		end
 	end
+	fill = VehicleSort.config[33][2] and VehicleSort:reduceFills(fill) or fill
+	table.insert(ret, name .. fill)
+	for _, v in ipairs(implementStrings) do table.insert(ret, v) end
 
-	return ret;
+	return ret
 end
 
 function VehicleSort:getName(realId, sFallback)
-	nam = g_currentMission.vehicleSystem.vehicles[realId]:getName();
-	if nam == nil then
-		nam = obj.typeName;
+	local name = g_currentMission.vehicleSystem.vehicles[realId]:getName()
+	if name == nil then
+		name = obj.typeName
 	end
-	if nam == nil or nam == '' then
-		return sFallback;
+	if name == nil or name == '' then
+		return sFallback
 	else
-		return nam;
+		return name
 	end
 end
 
 function VehicleSort:getBrandName(realId)
-	--return g_currentMission.vehicleSystem.vehicles[realId]:getFullName();		--Problem is that getFullName also returns the helper name.
-	local storeItem = g_storeManager:getItemByXMLFilename(g_currentMission.vehicleSystem.vehicles[realId].configFileName);
-    if storeItem ~= nil then
-		local brand = g_brandManager:getBrandByIndex(storeItem.brandIndex);
-		if brand ~= nil then
-            return brand.title;
-		else
-			return 'Lizard';
-        end
-    end
+	return VehicleSort:getBrandByVehicle(g_currentMission.vehicleSystem.vehicles[realId])
+end
+function VehicleSort:getBrandByVehicle(vehicle)
+	return vehicle.brand.title
+end
+
+function VehicleSort:getPlate(realId)
+	return VehicleSort:getPlateByVehicle(g_currentMission.vehicleSystem.vehicles[realId])
+end
+function VehicleSort:getPlateByVehicle(vehicle)
+	local spec = vehicle.spec_licensePlates
+	for i=1, #spec.licensePlates do
+		local licensePlate = spec.licensePlates[i]
+		if licensePlate.position == LicensePlateManager.PLATE_POSITION.BACK or i == #spec.licensePlates then
+			return licensePlate.data:getFormattedString()
+		end
+	end
+end
+
+function VehicleSort:getHorsePower(realId)
+	local vehicle = g_currentMission.vehicleSystem.vehicles[realId]
+	local motorized = vehicle.spec_motorized
+	if not motorized then return end
+	local motor = motorized.motor
+	if not motor then return end
+	local consumers = motorized.consumersByFillTypeName
+	if not consumers then return end
+
+	-- avoids showing hp for conveyors, etc. by only considering consumers
+	-- reduces processing by getting values from pre-stored objects
+	if consumers['DIESEL'] or consumers['ELECTRICCHARGE'] or consumers['METHANE'] then
+		return math.ceil(VehicleSort:getHorsePowerFromStore(realId))
+	end
+
+	-- else you can use this if u really want to calculate hp
+	-- -- avoids showing hp for conveyors, etc. by only considering consumers
+	-- if consumers['ELECTRICCHARGE'] then
+	-- 	return math.ceil(VehicleSort:getHorsePowerFromStore(realId))
+	-- elseif consumers['DIESEL'] or consumers['METHANE'] then
+	-- 	return math.round(motor.peakMotorPower * 1.359621)
+	-- end
+end
+
+function VehicleSort:getHorsePowerFromStore(realId)
+	local motorConfig = g_currentMission.vehicleSystem.vehicles[realId]['configurations']['motor']
+	local storeItem = g_storeManager.xmlFilenameToItem[string.lower(g_currentMission.vehicleSystem.vehicles[realId]['configFileName'])]
+	return storeItem.configurations.motor[motorConfig].power
 end
 
 function VehicleSort:getOrderedVehicles()
@@ -1131,67 +1209,17 @@ function VehicleSort:getTextColor(index, realId)
 end
 
 function VehicleSort:getTextSize()
-  local val = tonumber(VehicleSort.config[9][2]);
-  if val == nil or val < 1 or val > 3 then
-    val = 2;
-  end
-  if val == 1 then
-    return VehicleSort.tPos.sizeSmall;
-  elseif val == 3 then
-    return VehicleSort.tPos.sizeBig;
-  else
-    VehicleSort.config[9][2] = 2;
-    return VehicleSort.tPos.size;
-  end
-end
-
-function VehicleSort:getHorsePower(realId)
-	if g_currentMission.vehicleSystem.vehicles[realId] ~= nil then
-		if VehicleSort:isTrain(realId) then
-			--VehicleSort:dp(string.format('isTrain -> realId {%s}', tostring(realId)), 'getHorsePower');
-			return VehicleSort:getHorsePowerFromStore(realId)
-		else
-			local veh = g_currentMission.vehicleSystem.vehicles[realId]
-			if veh.spec_motorized ~= nil then
-				local maxMotorTorque = veh.spec_motorized.motor.peakMotorTorque
-				local maxRpm = veh.spec_motorized.motor.maxRpm
-				if maxRpm == 2200 then
-					return math.ceil(maxMotorTorque / 0.0044)
-				else
-					--Maybe I'm just too stupid. But somehow I don't get the results with the more complex formula I want. Hence getting max power from store
-					--HP = (torqueScale * torquecurvevalue * Pi * RPM / 30) * 1.35962161
-					-- motor.lastMotorRpm
-					--local torqueCurveVal = veh.spec_motorized.motor.torqueCurve.keyframes[6][1]
-					--local torqueCurveRPM = veh.spec_motorized.motor.torqueCurve.keyframes[6]['time']
-					--local hp = (maxMotorTorque * torqueCurveVal * math.pi * torqueCurveRPM / 30) * 1.35962161
-					--VehicleSort:dp(string.format('maxRPM ~= 2200. HP for {%s} is: {%s}', veh.configFileName, hp))
-					--VehicleSort:dp(string.format('torqueCurveVal {%s}, torqueCurveRPM {%s}, maxMotorTorque {%s}', tostring(torqueCurveVal), tostring(torqueCurveRPM), tostring(maxMotorTorque)))
-					--return math.ceil(hp);
-					local powerFromStore = VehicleSort:getHorsePowerFromStore(realId)
-					if powerFromStore ~= nil then
-						return math.ceil(powerFromStore)
-					end
-				end
-			end
-		end
+	local val = tonumber(VehicleSort.config[9][2])
+	if val == nil or val < 1 or val > 3 then
+		val = 2
 	end
-end
-
-function VehicleSort:getHorsePowerFromStore(realId)
-	--VehicleSort:dp(string.format('realId {%s}', tostring(realId)));
-	local motorConfig = g_currentMission.vehicleSystem.vehicles[realId]['configurations']['motor']
-	local confFile = string.lower(g_currentMission.vehicleSystem.vehicles[realId]['configFileName']);
-	storeItem = g_storeManager.xmlFilenameToItem[confFile:lower()];
-	--VehicleSort:dp(storeItem);
-	if storeItem ~= nil then
-		if storeItem.configurations ~= nil then
-			--VehicleSort:dp(storeItem.configurations);
-			if storeItem.configurations.motor ~= nil then
-				if storeItem.configurations.motor[motorConfig].power ~= nil then
-					return storeItem.configurations.motor[motorConfig].power;
-				end
-			end
-		end
+	if val == 1 then
+		return VehicleSort.tPos.sizeSmall
+	elseif val == 3 then
+		return VehicleSort.tPos.sizeBig
+	else
+		VehicleSort.config[9][2] = 2
+		return VehicleSort.tPos.size
 	end
 end
 
@@ -1905,11 +1933,11 @@ function VehicleSort:getVehImplementsFillInfobox(realId)
 	local implements = VehicleSort:getVehImplements(realId);
 	if implements ~= nil then
 		for i = 1, #implements do
-			local imp = implements[i];
-
-			if imp ~= nil and imp.object ~= nil and (string.len(VehicleSort:getFillDisplay(imp.object)) > 1) then
-				line = string.gsub(VehicleSort:getAttachmentName(imp.object), "%s$", "") .. " | " .. g_i18n.modEnvironments[VehicleSort.ModName].texts.fillLevel .. ": " .. VehicleSort:getFillDisplay(imp.object, true);
-				table.insert(texts, line);
+			local imp = implements[i]
+			local fillLevel = VehicleSort:getFillDisplay(imp.object, true)
+			if imp ~= nil and imp.object ~= nil and (string.len(fillLevel) > 1) then
+				line = string.gsub(VehicleSort:getAttachmentName(imp.object), "%s$", "") .. " | " .. g_i18n.modEnvironments[VehicleSort.ModName].texts.fillLevel .. ": " .. fillLevel
+				table.insert(texts, line)
 			end
 		end
 	end
@@ -1920,9 +1948,9 @@ end
 function VehicleSort:isActionAllowed()
 	-- We don't want to accidently switch vehicle when the vehicle list is opened and we change to a menu
 	if string.len(g_gui.currentGuiName) > 0 or #g_gui.dialogs > 0 then
-		return false;
+		return false
 	elseif VehicleSort.showConfig or VehicleSort.showVehicles then
-		return true;
+		return true
 	end
 end
 
@@ -1932,11 +1960,16 @@ end
 
 function VehicleSort:contains(haystack, needle)
 	for _, value in pairs(haystack) do
+        if type(needle) == "table" then
+            return VehicleSort:contains(needle, value)
+        else
 		if value == needle then
-			return true;
+                return true
 		end
 	end
-	return false;
+
+	end
+	return false
 end
 
 function VehicleSort:tabVehicle(backwards)
